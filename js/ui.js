@@ -89,6 +89,15 @@ const TurfUI = {
     return d.split(',').map(n => names[Number(n)] || n).join(', ');
   },
 
+  // Owners with one venue: show its full name instead of a disabled, truncated dropdown
+  showSingleVenue(select, venue) {
+    if (!select || !venue) return;
+    const label = document.createElement('div');
+    label.textContent = venue.name;
+    label.style.cssText = 'color:#fff;font-weight:700;font-size:0.95rem;line-height:1.3;';
+    select.replaceWith(label);
+  },
+
   getTodayISODate() {
     return this.formatISODate(new Date());
   },
@@ -119,14 +128,12 @@ const TurfUI = {
   },
 
   // Mobile Menu Toggle
+  // Delegated, because renderNavbarAuth() re-creates the button after this runs
   setupMobileNav() {
-    const btn = document.querySelector('.mobile-menu-btn');
-    const links = document.querySelector('.nav-links');
-    if (btn && links) {
-      btn.addEventListener('click', () => {
-        links.classList.toggle('mobile-open');
-      });
-    }
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.mobile-menu-btn')) return;
+      document.querySelector('.nav-links')?.classList.toggle('mobile-open');
+    });
   },
 
   // Dynamic Navbar Authentication State & Role-Based Navigation
@@ -189,7 +196,7 @@ const TurfUI = {
             <div style="width:28px;height:28px;background:var(--primary);color:var(--secondary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.75rem;">
               ${initials}
             </div>
-            <div style="display:flex;flex-direction:column;text-align:left;">
+            <div class="nav-user-text" style="display:flex;flex-direction:column;text-align:left;">
               <span style="font-size:0.825rem;font-weight:700;line-height:1.1;">${user.fullName}</span>
               <span style="font-size:0.675rem;color:${isOwner ? 'var(--accent-amber)' : 'var(--primary)'};font-weight:600;">${isOwner ? '🏟️ Turf Owner' : '⚽ Player'}</span>
             </div>
@@ -226,8 +233,6 @@ const TurfUI = {
       }
     }
 
-    // Re-attach mobile nav listener if needed
-    this.setupMobileNav();
   }
 };
 

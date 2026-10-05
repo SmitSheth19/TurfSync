@@ -32,10 +32,7 @@ const TurfAnalytics = {
     `).join('');
 
     if (venuesToDisplay.length <= 1) {
-      select.disabled = true;
-      select.style.cursor = 'default';
-      select.style.opacity = '1';
-      select.title = 'Your Assigned Facility';
+      TurfUI.showSingleVenue(select, venuesToDisplay[0]);
     } else {
       select.addEventListener('change', (e) => {
         if (!myVenues.some(v => v.id === e.target.value)) {

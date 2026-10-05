@@ -39,10 +39,7 @@ const TurfAdmin = {
 
     // Lock selector if single facility to prevent switching to other owners' venues
     if (venuesToDisplay.length <= 1) {
-      select.disabled = true;
-      select.style.cursor = 'default';
-      select.style.opacity = '1';
-      select.title = 'Your Assigned Facility';
+      TurfUI.showSingleVenue(select, venuesToDisplay[0]);
     } else {
       select.addEventListener('change', (e) => {
         // Double check the requested venue is owned by user
@@ -115,7 +112,7 @@ const TurfAdmin = {
           </td>
           <td>₹${court.baseRate}/hr</td>
           <td>
-            <strong style="color:var(--secondary);">${courtBookings.length} Slots</strong>
+            <strong style="color:var(--secondary);">${courtBookings.length} Slot${courtBookings.length === 1 ? '' : 's'}</strong>
             <div style="font-size:0.75rem;color:var(--text-muted);">Occupied Today</div>
           </td>
           <td>
@@ -234,15 +231,46 @@ const TurfAdmin = {
     const select = document.getElementById('off-court-id');
     if (!select || !venue) return;
 
-    select.innerHTML = venue.courts.map(c => `
+    const activeCourts = venue.courts.filter(c => c.isActive !== false);
+    if (activeCourts.length === 0) {
+      TurfUI.showToast('All courts are blocked. Unblock a court to add a booking.', 'warning');
+      return;
+    }
+    select.innerHTML = activeCourts.map(c => `
       <option value="${c.id}" ${c.id === courtId ? 'selected' : ''}>${c.name} (${c.sport})</option>
     `).join('');
 
+    const dateInput = document.getElementById('off-date');
     const todayStr = TurfUI.getTodayISODate();
-    document.getElementById('off-date').value = todayStr;
-    document.getElementById('off-date').min = todayStr;
+    dateInput.value = todayStr;
+    dateInput.min = todayStr;
 
+    select.onchange = dateInput.onchange = () => this.renderOfflineTimes();
+    this.renderOfflineTimes();
     TurfUI.openModal('offline-booking-modal');
+  },
+
+  // Hours the venue is open, with booked and finished hours disabled
+  renderOfflineTimes() {
+    const venue = TurfStorage.getVenueById(this.currentVenueId);
+    const courtId = document.getElementById('off-court-id').value;
+    const dateStr = document.getElementById('off-date').value;
+    const timeSelect = document.getElementById('off-time');
+    const openH = parseInt(venue.openingTime, 10), closeH = parseInt(venue.closingTime, 10);
+    const now = new Date();
+
+    let firstFree = null;
+    const options = [];
+    for (let h = openH; h < closeH; h++) {
+      const t = `${String(h).padStart(2, '0')}:00`;
+      const over = new Date(`${dateStr}T${t}:00+05:30`).getTime() + 3600e3 <= now.getTime();
+      const booked = TurfStorage.isSlotBooked(courtId, dateStr, t);
+      const disabled = over || booked;
+      if (!disabled && !firstFree) firstFree = t;
+      options.push(`<option value="${t}" ${disabled ? 'disabled' : ''}>${TurfUI.formatTime(t)}${booked ? ' (booked)' : over ? ' (over)' : ''}</option>`);
+    }
+    timeSelect.innerHTML = options.join('');
+    if (firstFree) timeSelect.value = firstFree;
   }
 };
 
