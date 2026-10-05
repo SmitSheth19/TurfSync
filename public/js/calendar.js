@@ -111,7 +111,7 @@ const TurfCalendar = {
       return `
         <button class="court-tab ${isSelected ? 'active' : ''}" data-court-id="${court.id}">
           <span>${sportEmoji}</span>
-          <span>${court.name}</span>
+          <span>${TurfUI.escapeHtml(court.name)}</span>
           <span class="badge ${isSelected ? 'badge-green' : 'badge-gray'}" style="margin-left:0.3rem;">${court.isActive === false ? 'Blocked' : `₹${court.baseRate}/hr`}</span>
         </button>
       `;

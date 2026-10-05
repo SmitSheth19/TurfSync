@@ -22,63 +22,11 @@
 </head>
 <body>
 
-  <!-- Top Navigation -->
-  <nav class="navbar">
-    <div class="container nav-container">
-      <a href="index.html" class="logo">
-        <div class="logo-icon">⚡</div>
-        <div>Turf<span>Sync</span> <small style="font-size:0.75rem;font-weight:600;background:var(--primary-light);color:var(--primary-dark);padding:0.2rem 0.5rem;border-radius:4px;margin-left:0.4rem;">ADMIN</small></div>
-      </a>
-
-      <ul class="nav-links">
-        <li><a href="index.html" class="nav-link">&larr; Switch to Player View</a></li>
-      </ul>
-
-      <div class="nav-actions">
-        <span class="badge badge-green">Facility Owner Account</span>
-      </div>
-    </div>
-  </nav>
 
   <!-- Admin Layout -->
   <div class="admin-layout">
+    <aside class="admin-sidebar" id="owner-sidebar"></aside>
     
-    <!-- Admin Sidebar -->
-    <aside class="admin-sidebar">
-      <div class="sidebar-brand">
-        <label style="font-size:0.75rem;font-weight:700;color:#94a3b8;display:block;margin-bottom:0.4rem;">SELECT FACILITY</label>
-        <select id="analytics-venue-select" class="sidebar-venue-select">
-          <!-- Injected via TurfAnalytics -->
-        </select>
-      </div>
-
-      <ul class="sidebar-nav">
-        <li>
-          <a href="admin-dashboard.html" class="sidebar-link">
-            <span class="sidebar-icon">📊</span>
-            <span>Overview</span>
-          </a>
-        </li>
-        <li>
-          <a href="admin-pricing.html" class="sidebar-link">
-            <span class="sidebar-icon">⚡</span>
-            <span>Surge Pricing</span>
-          </a>
-        </li>
-        <li>
-          <a href="admin-analytics.html" class="sidebar-link active">
-            <span class="sidebar-icon">📈</span>
-            <span>Analytics</span>
-          </a>
-        </li>
-        <li>
-          <a href="venues.html" class="sidebar-link">
-            <span class="sidebar-icon">🏟️</span>
-            <span>Public Catalog</span>
-          </a>
-        </li>
-      </ul>
-    </aside>
 
     <!-- Admin Main Body -->
     <main class="admin-main">

@@ -134,6 +134,29 @@ const TurfAPI = {
     return local;
   },
 
+  // Owner venue/court edits: wait for the server, then re-sync the local cache
+  async _ownerWrite(method, path, body) {
+    try {
+      const res = await fetch(`${this.BASE_URL}${path}`, {
+        method,
+        headers: this.getAuthHeaders(),
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const data = res.status === 204 ? null : await res.json().catch(() => ({}));
+      if (!res.ok) return { success: false, error: data?.error || 'Could not save changes.' };
+      this._sync = null;
+      await this.sync();
+      return { success: true, data };
+    } catch (e) {
+      return { success: false, error: 'Network error. Please try again.' };
+    }
+  },
+
+  updateVenue(fields) { return this._ownerWrite('PUT', '/admin/venue', fields); },
+  addCourt(fields) { return this._ownerWrite('POST', '/admin/courts', fields); },
+  updateCourt(id, fields) { return this._ownerWrite('PUT', `/admin/courts/${id}`, fields); },
+  deleteCourt(id) { return this._ownerWrite('DELETE', `/admin/courts/${id}`); },
+
   toggleCourt(courtId) {
     this._send('PATCH', `/admin/courts/${courtId}/toggle`);
   },
@@ -279,8 +302,18 @@ const TurfAPI = {
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
-          TurfStorage.cancelBooking(bookingId, reason); // Sync local storage
-          return { success: true, booking: data.booking, refund: data.refund };
+          // Mirror the server's outcome (incl. its refund) in the local cache
+          const cache = TurfStorage.getData();
+          const local = cache.bookings.find(b => b.id === bookingId);
+          if (local) {
+            Object.assign(local, {
+              status: 'CANCELLED', cancelledAt: new Date().toISOString(), cancellationReason: reason,
+              refundAmount: data.refund?.refundAmount || 0, refundPercent: data.refund?.refundPercent || 0,
+              paymentStatus: data.refund?.refundPercent > 0 ? 'REFUNDED' : 'SUCCEEDED'
+            });
+            TurfStorage.saveData(cache);
+          }
+          return { success: true, booking: local, refund: data.refund };
         }
         return { success: false, error: data.error || 'Cancellation failed.' };
       } catch (e) {

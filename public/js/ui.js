@@ -20,7 +20,7 @@ const TurfUI = {
     toast.innerHTML = `
       <div style="display:flex;align-items:center;gap:0.6rem;">
         <span style="font-weight:bold;font-size:1.1rem;">${icon}</span>
-        <span>${message}</span>
+        <span>${TurfUI.escapeHtml(message)}</span>
       </div>
       <button style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:1.1rem;" onclick="this.parentElement.remove()">&times;</button>
     `;
@@ -89,13 +89,68 @@ const TurfUI = {
     return d.split(',').map(n => names[Number(n)] || n).join(', ');
   },
 
-  // Owners with one venue: show its full name instead of a disabled, truncated dropdown
-  showSingleVenue(select, venue) {
-    if (!select || !venue) return;
-    const label = document.createElement('div');
-    label.textContent = venue.name;
-    label.style.cssText = 'color:#fff;font-weight:700;font-size:0.95rem;line-height:1.3;';
-    select.replaceWith(label);
+  // Owner pages have no top navbar: this sidebar is their navigation
+  OWNER_LINKS: [
+    ['admin-dashboard.html', '📊', 'Dashboard'],
+    ['admin-bookings.html', '📋', 'Bookings'],
+    ['admin-pricing.html', '⚡', 'Dynamic Pricing'],
+    ['admin-analytics.html', '📈', 'Analytics'],
+    ['admin-venue.html', '🏟️', 'My Venue'],
+    ['venues.html', '🌐', 'Public Catalog']
+  ],
+
+  renderOwnerSidebar() {
+    const aside = document.getElementById('owner-sidebar');
+    if (!aside) return;
+    const user = TurfStorage.getCurrentUser() || {};
+    const page = window.location.pathname.split('/').pop() || 'index.html';
+    const initials = (user.fullName || '').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+    aside.innerHTML = `
+      <div class="sidebar-top">
+        <a href="admin-dashboard.html" class="logo">
+          <div class="logo-icon">⚡</div>
+          <div>Turf<span>Sync</span></div>
+        </a>
+        <button class="sidebar-menu-btn" aria-label="Toggle menu">&#9776;</button>
+      </div>
+      <div class="sidebar-brand">
+        <div class="sidebar-venue-label">YOUR VENUE</div>
+        <div class="sidebar-venue-name" id="owner-venue-name"></div>
+      </div>
+      <ul class="sidebar-nav">
+        ${this.OWNER_LINKS.map(([href, icon, label]) => `
+          <li>
+            <a href="${href}" class="sidebar-link ${href === page ? 'active' : ''}">
+              <span class="sidebar-icon">${icon}</span>
+              <span>${label}</span>
+            </a>
+          </li>`).join('')}
+      </ul>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div class="sidebar-avatar">${this.escapeHtml(initials)}</div>
+          <div style="min-width:0;">
+            <div class="sidebar-user-name">${this.escapeHtml(user.fullName || '')}</div>
+            <div class="sidebar-user-role">🏟️ Turf Owner</div>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-outline" style="color:#cbd5e1;border-color:rgba(255,255,255,0.25);" onclick="TurfStorage.logout()">Sign Out</button>
+      </div>
+    `;
+    aside.querySelector('.sidebar-menu-btn').addEventListener('click', () => aside.classList.toggle('open'));
+  },
+
+  // Fill in the venue name once synced data is available
+  showOwnerVenue(venueId) {
+    const el = document.getElementById('owner-venue-name');
+    const venue = TurfStorage.getVenueById(venueId);
+    if (el && venue) el.textContent = venue.name;
+  },
+
+  // Escape user-entered text before putting it into innerHTML
+  escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   },
 
   getTodayISODate() {
@@ -155,12 +210,9 @@ const TurfUI = {
         `;
       } else if (TurfStorage.isOwner(user)) {
         // Facility Owner: Administrative controls and facility management
-        navLinks.innerHTML = `
-          <li><a href="admin-dashboard.html" class="nav-link" style="color:var(--primary);font-weight:700;">🏟️ Owner Dashboard</a></li>
-          <li><a href="admin-pricing.html" class="nav-link">Surge Pricing</a></li>
-          <li><a href="admin-analytics.html" class="nav-link">Analytics</a></li>
-          <li><a href="venues.html" class="nav-link">Public Catalog</a></li>
-        `;
+        // Owners browsing public pages: the same destinations as the owner sidebar
+        navLinks.innerHTML = this.OWNER_LINKS.map(([href, , label]) =>
+          `<li><a href="${href}" class="nav-link"${href === 'admin-dashboard.html' ? ' style="color:var(--primary);font-weight:700;"' : ''}>${label}</a></li>`).join('');
       } else {
         // Registered Player: Player reservation tools (no owner portal)
         navLinks.innerHTML = `
@@ -240,4 +292,5 @@ document.addEventListener('DOMContentLoaded', () => {
   TurfUI.setupModalBackdropDismiss();
   TurfUI.setupMobileNav();
   TurfUI.renderNavbarAuth();
+  TurfUI.renderOwnerSidebar();
 });

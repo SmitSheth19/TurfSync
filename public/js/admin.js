@@ -25,35 +25,7 @@ const TurfAdmin = {
   },
 
   setupVenueSelector() {
-    const user = TurfStorage.getCurrentUser();
-    const select = document.getElementById('admin-venue-select');
-    if (!select) return;
-
-    // Security: Only list venues that belong to THIS facility owner
-    const myVenues = TurfStorage.getVenuesForUser(user);
-    const venuesToDisplay = myVenues.length > 0 ? myVenues : TurfStorage.getVenues().filter(v => v.id === this.currentVenueId);
-
-    select.innerHTML = venuesToDisplay.map(v => `
-      <option value="${v.id}" ${v.id === this.currentVenueId ? 'selected' : ''}>${v.name}</option>
-    `).join('');
-
-    // Lock selector if single facility to prevent switching to other owners' venues
-    if (venuesToDisplay.length <= 1) {
-      TurfUI.showSingleVenue(select, venuesToDisplay[0]);
-    } else {
-      select.addEventListener('change', (e) => {
-        // Double check the requested venue is owned by user
-        if (!myVenues.some(v => v.id === e.target.value)) {
-          TurfUI.showToast('Unauthorized facility access.', 'error');
-          return;
-        }
-        this.currentVenueId = e.target.value;
-        this.renderKPIs();
-        this.renderCourtMatrix();
-        this.renderPricingRules();
-        TurfUI.showToast(`Switched venue to ${select.options[select.selectedIndex].text}`, 'info');
-      });
-    }
+    TurfUI.showOwnerVenue(this.currentVenueId);
   },
 
   renderKPIs() {
@@ -102,8 +74,8 @@ const TurfAdmin = {
       rowsHtml += `
         <tr>
           <td>
-            <strong>${court.name}</strong>
-            <div style="font-size:0.775rem;color:var(--text-muted);">${court.sport} &bull; ${court.surface}</div>
+            <strong>${TurfUI.escapeHtml(court.name)}</strong>
+            <div style="font-size:0.775rem;color:var(--text-muted);">${court.sport} &bull; ${TurfUI.escapeHtml(court.surface)}</div>
           </td>
           <td>
             <span class="badge ${court.isActive ? 'badge-green' : 'badge-red'}">
@@ -159,7 +131,7 @@ const TurfAdmin = {
     container.innerHTML = rules.map(rule => `
       <div class="pricing-rule-item">
         <div class="rule-meta">
-          <div class="rule-name">${rule.name}</div>
+          <div class="rule-name">${TurfUI.escapeHtml(rule.name)}</div>
           <div class="rule-timing">📅 ${TurfUI.formatRuleDays(rule.days)} &bull; ⏰ ${rule.startTime} - ${rule.endTime} &bull; ${rule.multiplier < 1 ? `Discount: ${Math.round((1 - rule.multiplier) * 100)}%` : `Surge: +${Math.round((rule.multiplier - 1) * 100)}%`}</div>
         </div>
         <div style="display:flex;align-items:center;gap:0.75rem;">
@@ -237,7 +209,7 @@ const TurfAdmin = {
       return;
     }
     select.innerHTML = activeCourts.map(c => `
-      <option value="${c.id}" ${c.id === courtId ? 'selected' : ''}>${c.name} (${c.sport})</option>
+      <option value="${c.id}" ${c.id === courtId ? 'selected' : ''}>${TurfUI.escapeHtml(c.name)} (${c.sport})</option>
     `).join('');
 
     const dateInput = document.getElementById('off-date');

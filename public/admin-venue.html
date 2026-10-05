@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TurfSync | My Venue</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase Realtime config (anon/public key) -->
+  <script>
+    window.TURFSYNC_CONFIG = {
+      supabaseUrl: "https://axnfaxcwjovhdrdepcov.supabase.co",
+      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4bmZheGN3am92aGRyZGVwY292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTQ3NjksImV4cCI6MjEwNjc5MDc2OX0.f8-9PY5yCDRWy8kyDiTPhIoSlXgy4hT8fq5AGD0yt6Q"
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase-client.js"></script>
+</head>
+<body>
+
+  <!-- Admin Layout -->
+  <div class="admin-layout">
+    <aside class="admin-sidebar" id="owner-sidebar"></aside>
+
+    <!-- Admin Main Body -->
+    <main class="admin-main">
+      <div class="admin-header">
+        <div class="admin-title-group">
+          <h1>My Venue</h1>
+          <p>What players see on your listing, and the courts they can book.</p>
+        </div>
+        <a id="view-listing-link" href="venues.html" class="btn btn-outline">View public listing &rarr;</a>
+      </div>
+
+      <!-- Venue details -->
+      <div class="matrix-container">
+        <h2 style="font-size:1.25rem;font-weight:800;color:var(--secondary);margin-bottom:1.25rem;">Venue Details</h2>
+        <form id="venue-form">
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <div class="form-group">
+                <label class="form-label" for="v-name">Venue name</label>
+                <input type="text" id="v-name" class="form-control" maxlength="120" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="v-tagline">Tagline</label>
+                <input type="text" id="v-tagline" class="form-control" maxlength="160" placeholder="e.g. Rooftop 5v5 turf in Andheri">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="v-description">Description</label>
+                <textarea id="v-description" class="form-control" rows="4" maxlength="1000"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="v-address">Address</label>
+                <input type="text" id="v-address" class="form-control" maxlength="200" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="v-area">Area</label>
+                <input type="text" id="v-area" class="form-control" maxlength="80" placeholder="e.g. Andheri West" required>
+              </div>
+            </div>
+
+            <div>
+              <div class="form-group">
+                <label class="form-label" for="v-image">Photo link (https)</label>
+                <input type="url" id="v-image" class="form-control" placeholder="https://…">
+              </div>
+              <div style="height:180px;border-radius:var(--radius-md);overflow:hidden;background:#1e293b;margin-bottom:1.25rem;">
+                <img id="v-image-preview" alt="Venue photo preview" style="width:100%;height:100%;object-fit:cover;">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="form-group">
+                  <label class="form-label" for="v-open">Opens</label>
+                  <select id="v-open" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="v-close">Closes</label>
+                  <select id="v-close" class="form-control"></select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="v-policy">Full refund if cancelled at least</label>
+                <select id="v-policy" class="form-control">
+                  <option value="6">6 hours before</option>
+                  <option value="12">12 hours before</option>
+                  <option value="24">24 hours before</option>
+                  <option value="48">48 hours before</option>
+                  <option value="72">72 hours before</option>
+                </select>
+                <small style="color:var(--text-muted);">Half refund up to half that time; none after.</small>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="submit" id="venue-save-btn" class="btn btn-primary">Save Venue Details</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Courts -->
+      <div class="matrix-container">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">
+          <h2 style="font-size:1.25rem;font-weight:800;color:var(--secondary);">Courts</h2>
+          <button class="btn btn-primary btn-sm" onclick="openCourtModal()">+ Add Court</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="matrix-table">
+            <thead>
+              <tr><th>Court</th><th>Sport</th><th>Surface</th><th>Hourly rate</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody id="courts-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add / Edit Court Modal -->
+  <dialog id="court-modal" class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="court-modal-title">Add Court</h3>
+      <button class="modal-close-btn" onclick="TurfUI.closeModal('court-modal')">&times;</button>
+    </div>
+    <form id="court-form">
+      <div class="modal-body">
+        <input type="hidden" id="c-id">
+        <div class="form-group">
+          <label class="form-label" for="c-name">Court name</label>
+          <input type="text" id="c-name" class="form-control" maxlength="80" placeholder="e.g. Turf A (5v5)" required>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="form-group">
+            <label class="form-label" for="c-sport">Sport</label>
+            <select id="c-sport" class="form-control">
+              <option value="FOOTBALL">⚽ Football</option>
+              <option value="CRICKET">🏏 Cricket</option>
+              <option value="BADMINTON">🏸 Badminton</option>
+              <option value="TENNIS">🎾 Tennis</option>
+              <option value="PICKLEBALL">🏓 Pickleball</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-rate">Hourly rate (₹, before GST)</label>
+            <input type="number" id="c-rate" class="form-control" min="100" max="20000" step="1" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="c-surface">Surface</label>
+          <input type="text" id="c-surface" class="form-control" maxlength="80" placeholder="e.g. AstroTurf 40mm">
+        </div>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;font-weight:600;">
+          <input type="checkbox" id="c-indoor"> Indoor court
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="TurfUI.closeModal('court-modal')">Cancel</button>
+        <button type="submit" id="court-save-btn" class="btn btn-primary">Save Court</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Scripts -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    const FALLBACK_IMG = 'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&w=800&q=80';
+    let venueId = null;
+
+    function initVenuePage() {
+      const user = TurfStorage.getCurrentUser();
+      if (!user || !TurfStorage.isOwner(user)) {
+        alert('Access restricted: Please log in with a Facility Owner account to manage your venue.');
+        window.location.href = 'login.html';
+        return;
+      }
+      venueId = user.venueId;
+      document.getElementById('view-listing-link').href = `booking.html?venue=${venueId}`;
+
+      // Whole-hour choices; a venue can close at midnight (24:00)
+      const hour = h => `${String(h).padStart(2, '0')}:00`;
+      const label = h => h === 24 ? '12:00 AM (midnight)' : TurfUI.formatTime(hour(h));
+      document.getElementById('v-open').innerHTML = [...Array(24).keys()].map(h => `<option value="${hour(h)}">${label(h)}</option>`).join('');
+      document.getElementById('v-close').innerHTML = [...Array(24).keys()].map(h => h + 1).map(h => `<option value="${hour(h)}">${label(h)}</option>`).join('');
+
+      const preview = document.getElementById('v-image-preview');
+      preview.onerror = () => { preview.onerror = null; preview.src = FALLBACK_IMG; };
+      document.getElementById('v-image').addEventListener('input', e => {
+        preview.onerror = () => { preview.onerror = null; preview.src = FALLBACK_IMG; };
+        preview.src = e.target.value || FALLBACK_IMG;
+      });
+
+      document.getElementById('venue-form').addEventListener('submit', saveVenue);
+      document.getElementById('court-form').addEventListener('submit', saveCourt);
+      render();
+    }
+
+    function render() {
+      const venue = TurfStorage.getVenueById(venueId);
+      if (!venue) return;
+      TurfUI.showOwnerVenue(venueId);
+
+      document.getElementById('v-name').value = venue.name || '';
+      document.getElementById('v-tagline').value = venue.tagline || '';
+      document.getElementById('v-description').value = venue.description || '';
+      document.getElementById('v-address').value = venue.address || '';
+      document.getElementById('v-area').value = venue.area || '';
+      document.getElementById('v-image').value = venue.image || '';
+      document.getElementById('v-image-preview').src = venue.image || FALLBACK_IMG;
+      document.getElementById('v-open').value = venue.openingTime || '06:00';
+      document.getElementById('v-close').value = venue.closingTime || '23:00';
+      const policy = document.getElementById('v-policy');
+      const hours = String(venue.cancellationPolicyHours || 24);
+      if (![...policy.options].some(o => o.value === hours)) policy.add(new Option(`${hours} hours before`, hours));
+      policy.value = hours;
+
+      renderCourts(venue);
+    }
+
+    function renderCourts(venue) {
+      const esc = TurfUI.escapeHtml;
+      document.getElementById('courts-tbody').innerHTML = venue.courts.map(c => `
+        <tr>
+          <td><strong>${esc(c.name)}</strong>${c.isIndoor ? ' <span class="badge badge-gray">Indoor</span>' : ''}</td>
+          <td>${esc(c.sport)}</td>
+          <td>${esc(c.surface || '—')}</td>
+          <td>₹${Number(c.baseRate).toLocaleString('en-IN')}/hr</td>
+          <td><span class="badge ${c.isActive === false ? 'badge-red' : 'badge-green'}">${c.isActive === false ? 'Blocked' : 'Active'}</span></td>
+          <td style="text-align:right;white-space:nowrap;">
+            <button class="btn btn-sm btn-outline" onclick="openCourtModal('${c.id}')">Edit</button>
+            <button class="btn btn-sm btn-outline" style="color:var(--accent-red);border-color:rgba(239,68,68,0.35);" onclick="removeCourt('${c.id}')">Delete</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function saveVenue(e) {
+      e.preventDefault();
+      const btn = document.getElementById('venue-save-btn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      const res = await TurfAPI.updateVenue({
+        name: document.getElementById('v-name').value,
+        tagline: document.getElementById('v-tagline').value,
+        description: document.getElementById('v-description').value,
+        address: document.getElementById('v-address').value,
+        area: document.getElementById('v-area').value,
+        image: document.getElementById('v-image').value.trim(),
+        openingTime: document.getElementById('v-open').value,
+        closingTime: document.getElementById('v-close').value,
+        cancellationPolicyHours: Number(document.getElementById('v-policy').value)
+      });
+      btn.disabled = false; btn.textContent = 'Save Venue Details';
+      if (!res.success) return TurfUI.showToast(res.error, 'error');
+      render();
+      TurfUI.showToast('✓ Venue details saved.', 'success');
+    }
+
+    function openCourtModal(courtId) {
+      const court = courtId ? TurfStorage.getCourtById(courtId) : null;
+      document.getElementById('court-modal-title').textContent = court ? 'Edit Court' : 'Add Court';
+      document.getElementById('c-id').value = court ? court.id : '';
+      document.getElementById('c-name').value = court ? court.name : '';
+      document.getElementById('c-sport').value = court ? court.sport : 'FOOTBALL';
+      document.getElementById('c-rate').value = court ? court.baseRate : '';
+      document.getElementById('c-surface').value = court ? (court.surface || '') : '';
+      document.getElementById('c-indoor').checked = !!(court && court.isIndoor);
+      TurfUI.openModal('court-modal');
+    }
+
+    async function saveCourt(e) {
+      e.preventDefault();
+      const id = document.getElementById('c-id').value;
+      const fields = {
+        name: document.getElementById('c-name').value,
+        sport: document.getElementById('c-sport').value,
+        baseRate: Number(document.getElementById('c-rate').value),
+        surface: document.getElementById('c-surface').value,
+        isIndoor: document.getElementById('c-indoor').checked
+      };
+      const btn = document.getElementById('court-save-btn');
+      btn.disabled = true;
+      const res = id ? await TurfAPI.updateCourt(id, fields) : await TurfAPI.addCourt(fields);
+      btn.disabled = false;
+      if (!res.success) return TurfUI.showToast(res.error, 'error');
+      TurfUI.closeModal('court-modal');
+      render();
+      TurfUI.showToast(id ? '✓ Court updated.' : '✓ Court added.', 'success');
+    }
+
+    async function removeCourt(courtId) {
+      const court = TurfStorage.getCourtById(courtId);
+      if (!court || !confirm(`Delete "${court.name}"? Its past bookings will be removed too.`)) return;
+      const res = await TurfAPI.deleteCourt(courtId);
+      if (!res.success) return TurfUI.showToast(res.error, 'error');
+      render();
+      TurfUI.showToast('Court deleted.', 'info');
+    }
+
+    TurfAPI.onReady(initVenuePage);
+  </script>
+</body>
+</html>

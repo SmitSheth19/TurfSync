@@ -161,3 +161,119 @@ exports.createOfflineBooking = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// ── Venue & court management (owner's own venue only) ─────────────────────────
+
+const SPORTS = ['FOOTBALL', 'CRICKET', 'BADMINTON', 'TENNIS', 'PICKLEBALL'];
+const HOUR = /^([01]\d|2[0-4]):00$/;
+const text = (v, min, max) => typeof v === 'string' && v.trim().length >= min && v.trim().length <= max;
+
+// Upcoming confirmed bookings, optionally narrowed by a predicate
+async function upcomingBookings(filter, predicate = () => true) {
+  const bookings = await dbAdapter.getBookings({ ...filter, status: 'CONFIRMED' });
+  return bookings.filter(b => slotStart(b.bookingDate, b.startTime) > new Date() && predicate(b));
+}
+
+// PUT /api/admin/venue
+exports.updateVenue = async (req, res) => {
+  try {
+    const venueId = req.user.venueId;
+    const venue = await dbAdapter.getVenueById(venueId);
+    if (!venue) return res.status(404).json({ error: 'Venue not found.' });
+
+    const b = req.body || {};
+    const errors = [];
+    if (!text(b.name, 2, 120)) errors.push('Name must be 2–120 characters.');
+    if (!text(b.address, 3, 200)) errors.push('Address must be 3–200 characters.');
+    if (!text(b.area, 2, 80)) errors.push('Area must be 2–80 characters.');
+    if (b.tagline && !text(b.tagline, 0, 160)) errors.push('Tagline must be under 160 characters.');
+    if (b.description && !text(b.description, 0, 1000)) errors.push('Description must be under 1000 characters.');
+    if (b.image && !/^https:\/\/[^\s"'<>`]{5,490}$/.test(b.image)) errors.push('Photo must be an https:// image link.');
+    if (!HOUR.test(b.openingTime || '') || !HOUR.test(b.closingTime || '') || b.openingTime >= b.closingTime || b.openingTime === '24:00') {
+      errors.push('Opening hours must be whole hours, with opening before closing.');
+    }
+    const policy = Number(b.cancellationPolicyHours);
+    if (!Number.isInteger(policy) || policy < 1 || policy > 72) errors.push('Cancellation notice must be 1–72 hours.');
+    if (errors.length) return res.status(400).json({ error: errors.join(' ') });
+
+    // Don't strand players who already booked hours the venue would no longer open
+    const outside = await upcomingBookings({ venueId }, bk => bk.startTime < b.openingTime || bk.startTime >= b.closingTime);
+    if (outside.length) {
+      return res.status(409).json({ error: `${outside.length} upcoming booking(s) fall outside these hours. Cancel or keep those hours open first.` });
+    }
+
+    const updated = await dbAdapter.updateVenue(venueId, {
+      name: b.name.trim(), tagline: (b.tagline || '').trim(), description: (b.description || '').trim(),
+      address: b.address.trim(), area: b.area.trim(), image: b.image || venue.image,
+      openingTime: b.openingTime, closingTime: b.closingTime, cancellationPolicyHours: policy
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+function validateCourt(b) {
+  const errors = [];
+  if (!text(b.name, 2, 80)) errors.push('Court name must be 2–80 characters.');
+  if (!SPORTS.includes(b.sport)) errors.push('Choose a sport.');
+  if (b.surface && !text(b.surface, 0, 80)) errors.push('Surface must be under 80 characters.');
+  const rate = Number(b.baseRate);
+  if (!Number.isInteger(rate) || rate < 100 || rate > 20000) errors.push('Hourly rate must be a whole number from ₹100 to ₹20,000.');
+  return errors;
+}
+
+// POST /api/admin/courts
+exports.addCourt = async (req, res) => {
+  try {
+    const b = req.body || {};
+    const errors = validateCourt(b);
+    if (errors.length) return res.status(400).json({ error: errors.join(' ') });
+    const court = {
+      id: `court-${Date.now()}`,
+      venueId: req.user.venueId,
+      name: b.name.trim(), sport: b.sport, surface: (b.surface || '').trim(),
+      isIndoor: !!b.isIndoor, baseRate: Number(b.baseRate), isActive: true
+    };
+    await dbAdapter.createCourt(court);
+    res.status(201).json(court);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT /api/admin/courts/:id
+exports.updateCourt = async (req, res) => {
+  try {
+    const court = await dbAdapter.getCourtById(req.params.id);
+    if (!court || court.venueId !== req.user.venueId) return res.status(404).json({ error: 'Court not found.' });
+    const b = req.body || {};
+    const errors = validateCourt(b);
+    if (errors.length) return res.status(400).json({ error: errors.join(' ') });
+    const updated = await dbAdapter.updateCourt(court.id, {
+      name: b.name.trim(), sport: b.sport, surface: (b.surface || '').trim(),
+      isIndoor: !!b.isIndoor, baseRate: Number(b.baseRate)
+    });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// DELETE /api/admin/courts/:id
+exports.deleteCourt = async (req, res) => {
+  try {
+    const court = await dbAdapter.getCourtById(req.params.id);
+    if (!court || court.venueId !== req.user.venueId) return res.status(404).json({ error: 'Court not found.' });
+    const courts = await dbAdapter.getCourts(court.venueId);
+    if (courts.length <= 1) return res.status(409).json({ error: 'A venue needs at least one court.' });
+    const upcoming = await upcomingBookings({ courtId: court.id });
+    if (upcoming.length) {
+      return res.status(409).json({ error: `${upcoming.length} upcoming booking(s) on this court. Block it instead, or cancel those first.` });
+    }
+    await dbAdapter.deleteCourt(court.id);
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

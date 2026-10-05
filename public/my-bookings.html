@@ -452,11 +452,11 @@
 
               <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
                 <span style="font-size:1.35rem;">${sportIcon}</span>
-                <h3 style="font-size:1.3rem;font-weight:800;color:var(--secondary);margin:0;">${b.courtName}</h3>
+                <h3 style="font-size:1.3rem;font-weight:800;color:var(--secondary);margin:0;">${TurfUI.escapeHtml(b.courtName)}</h3>
               </div>
 
               <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.75rem;">
-                📍 ${b.venueName} &bull; Mumbai &bull; Sport: <strong>${b.sport}</strong>
+                📍 ${TurfUI.escapeHtml(b.venueName)} &bull; Mumbai &bull; Sport: <strong>${b.sport}</strong>
               </p>
 
               <div style="background:var(--bg-subtle);padding:0.65rem 1rem;border-radius:var(--radius-md);margin-bottom:0.75rem;display:inline-flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
@@ -488,7 +488,7 @@
                 <button class="btn btn-outline btn-sm btn-block" onclick="addToCalendar('${b.id}')" style="font-size:0.825rem;">
                   📅 Add to Calendar
                 </button>
-                <button class="btn btn-outline-primary btn-sm btn-block" onclick="openReviewModal('${b.venueId}', '${b.id}', '${b.venueName}')" style="font-size:0.825rem;">
+                <button class="btn btn-outline-primary btn-sm btn-block" onclick="openReviewModal('${b.venueId}', '${b.id}')" style="font-size:0.825rem;">
                   ⭐ Rate Venue
                 </button>
                 <button class="btn btn-outline btn-sm btn-block" style="color:var(--accent-red);border-color:rgba(239,68,68,0.35);font-size:0.825rem;margin-top:0.25rem;" onclick="openCancelModal('${b.id}')">
@@ -496,7 +496,7 @@
                 </button>
               ` : `
                 ${isCompleted ? `
-                <button class="btn btn-outline-primary btn-sm btn-block" onclick="openReviewModal('${b.venueId}', '${b.id}', '${b.venueName}')" style="font-size:0.825rem;">
+                <button class="btn btn-outline-primary btn-sm btn-block" onclick="openReviewModal('${b.venueId}', '${b.id}')" style="font-size:0.825rem;">
                   ⭐ Rate Venue
                 </button>` : ''}
                 <a href="booking.html?venue=${b.venueId}" class="btn btn-primary btn-sm btn-block">
@@ -570,10 +570,10 @@
             ⚡ TURFSYNC OFFICIAL MATCH PASS
           </div>
           <h2 style="font-size:1.45rem;font-weight:800;color:var(--secondary);margin-bottom:0.2rem;">
-            ${booking.courtName}
+            ${TurfUI.escapeHtml(booking.courtName)}
           </h2>
           <p style="font-size:0.85rem;color:var(--text-muted);">
-            📍 ${booking.venueName} &bull; Mumbai
+            📍 ${TurfUI.escapeHtml(booking.venueName)} &bull; Mumbai
           </p>
         </div>
 
@@ -677,7 +677,8 @@
     }
 
     // Venue Review Modal
-    function openReviewModal(venueId, bookingId, venueName) {
+    function openReviewModal(venueId, bookingId) {
+      const venueName = TurfStorage.getBookingById(bookingId)?.venueName || TurfStorage.getVenueById(venueId)?.name || '';
       document.getElementById('review-venue-id').value = venueId;
       document.getElementById('review-booking-id').value = bookingId;
       document.getElementById('review-venue-name').textContent = venueName;

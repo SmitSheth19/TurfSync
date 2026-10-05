@@ -22,75 +22,23 @@
 </head>
 <body>
 
-  <!-- Top Navigation -->
-  <nav class="navbar">
-    <div class="container nav-container">
-      <a href="index.html" class="logo">
-        <div class="logo-icon">⚡</div>
-        <div>Turf<span>Sync</span> <small style="font-size:0.75rem;font-weight:600;background:var(--primary-light);color:var(--primary-dark);padding:0.2rem 0.5rem;border-radius:4px;margin-left:0.4rem;">ADMIN</small></div>
-      </a>
-
-      <ul class="nav-links">
-        <li><a href="index.html" class="nav-link">&larr; Switch to Player View</a></li>
-      </ul>
-
-      <div class="nav-actions">
-        <span class="badge badge-green">Facility Owner Account</span>
-      </div>
-    </div>
-  </nav>
 
   <!-- Admin Layout -->
   <div class="admin-layout">
+    <aside class="admin-sidebar" id="owner-sidebar"></aside>
     
-    <!-- Admin Sidebar -->
-    <aside class="admin-sidebar">
-      <div class="sidebar-brand">
-        <label style="font-size:0.75rem;font-weight:700;color:#94a3b8;display:block;margin-bottom:0.4rem;">SELECT FACILITY</label>
-        <select id="pricing-venue-select" class="sidebar-venue-select">
-          <!-- Injected via JS -->
-        </select>
-      </div>
-
-      <ul class="sidebar-nav">
-        <li>
-          <a href="admin-dashboard.html" class="sidebar-link">
-            <span class="sidebar-icon">📊</span>
-            <span>Overview</span>
-          </a>
-        </li>
-        <li>
-          <a href="admin-pricing.html" class="sidebar-link active">
-            <span class="sidebar-icon">⚡</span>
-            <span>Surge Pricing</span>
-          </a>
-        </li>
-        <li>
-          <a href="admin-analytics.html" class="sidebar-link">
-            <span class="sidebar-icon">📈</span>
-            <span>Analytics</span>
-          </a>
-        </li>
-        <li>
-          <a href="venues.html" class="sidebar-link">
-            <span class="sidebar-icon">🏟️</span>
-            <span>Public Catalog</span>
-          </a>
-        </li>
-      </ul>
-    </aside>
 
     <!-- Admin Main Body -->
     <main class="admin-main">
       <div class="admin-header">
         <div class="admin-title-group">
           <h1>Dynamic Pricing Engine</h1>
-          <p>Configure automated surge multipliers and off-peak discounts to optimize revenue.</p>
+          <p>Set peak-hour surcharges and off-peak discounts for your courts.</p>
         </div>
 
         <div>
           <button class="btn btn-primary" onclick="TurfUI.openModal('add-rule-modal')">
-            + Create Pricing Surge Rule
+            + Create Pricing Rule
           </button>
         </div>
       </div>
@@ -185,36 +133,14 @@
     function initPricingPage() {
       const user = TurfStorage.getCurrentUser();
       if (!user || !TurfStorage.isOwner(user)) {
-        alert('Access restricted: Please log in with a Facility Owner account to manage surge pricing.');
+        alert('Access restricted: Please log in with a Facility Owner account to manage dynamic pricing.');
         window.location.href = 'login.html';
         return;
       }
 
       currentVenueId = user.venueId || 'venue-1';
 
-      const select = document.getElementById('pricing-venue-select');
-      const myVenues = TurfStorage.getVenuesForUser(user);
-      const venuesToDisplay = myVenues.length > 0 ? myVenues : TurfStorage.getVenues().filter(v => v.id === currentVenueId);
-
-      if (select) {
-        select.innerHTML = venuesToDisplay.map(v => `
-          <option value="${v.id}" selected>${v.name}</option>
-        `).join('');
-
-        if (venuesToDisplay.length <= 1) {
-          TurfUI.showSingleVenue(select, venuesToDisplay[0]);
-        } else {
-          select.addEventListener('change', (e) => {
-            if (!myVenues.some(v => v.id === e.target.value)) {
-              TurfUI.showToast('Unauthorized facility access.', 'error');
-              return;
-            }
-            currentVenueId = e.target.value;
-            renderRules();
-          });
-        }
-      }
-
+      TurfUI.showOwnerVenue(currentVenueId);
       renderRules();
 
       const form = document.getElementById('add-pricing-rule-form');
@@ -257,15 +183,15 @@
       const rules = TurfStorage.getPricingRules(currentVenueId);
 
       if (rules.length === 0) {
-        container.innerHTML = `<p style="color:var(--text-muted);font-size:0.9rem;">No active pricing surge rules. Standard base rates apply across all slots.</p>`;
+        container.innerHTML = `<p style="color:var(--text-muted);font-size:0.9rem;">No active pricing rules. Standard base rates apply across all slots.</p>`;
         return;
       }
 
       container.innerHTML = rules.map(rule => `
         <div class="pricing-rule-item">
           <div class="rule-meta">
-            <div class="rule-name">${rule.name}</div>
-            <div class="rule-timing">📅 ${TurfUI.formatRuleDays(rule.days)} &bull; ⏰ ${rule.startTime} - ${rule.endTime} &bull; Surge Badge: <strong>"${rule.badgeText || ''}"</strong></div>
+            <div class="rule-name">${TurfUI.escapeHtml(rule.name)}</div>
+            <div class="rule-timing">📅 ${TurfUI.formatRuleDays(rule.days)} &bull; ⏰ ${rule.startTime} - ${rule.endTime} &bull; Surge Badge: <strong>"${TurfUI.escapeHtml(rule.badgeText || '')}"</strong></div>
           </div>
           <div style="display:flex;align-items:center;gap:0.75rem;">
             <span class="rule-multiplier-badge">${rule.multiplier}x Rate</span>

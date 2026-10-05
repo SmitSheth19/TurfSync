@@ -20,30 +20,7 @@ const TurfAnalytics = {
   },
 
   setupVenueSelector() {
-    const user = TurfStorage.getCurrentUser();
-    const select = document.getElementById('analytics-venue-select');
-    if (!select) return;
-
-    const myVenues = TurfStorage.getVenuesForUser(user);
-    const venuesToDisplay = myVenues.length > 0 ? myVenues : TurfStorage.getVenues().filter(v => v.id === this.currentVenueId);
-
-    select.innerHTML = venuesToDisplay.map(v => `
-      <option value="${v.id}" selected>${v.name}</option>
-    `).join('');
-
-    if (venuesToDisplay.length <= 1) {
-      TurfUI.showSingleVenue(select, venuesToDisplay[0]);
-    } else {
-      select.addEventListener('change', (e) => {
-        if (!myVenues.some(v => v.id === e.target.value)) {
-          TurfUI.showToast('Unauthorized facility access.', 'error');
-          return;
-        }
-        this.currentVenueId = e.target.value;
-        this.renderOccupancyHeatmap();
-        this.renderSportDistribution();
-      });
-    }
+    TurfUI.showOwnerVenue(this.currentVenueId);
   },
 
   // Confirmed bookings for this venue within ±4 weeks of today, plus the capacity they fill

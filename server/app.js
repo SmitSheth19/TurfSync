@@ -70,5 +70,13 @@ app.patch('/api/admin/courts/:id/toggle',
   requireAuth, requireRole('ROLE_VENUE_ADMIN'), adminController.toggleCourt);
 app.post('/api/admin/offline-booking',
   requireAuth, requireRole('ROLE_VENUE_ADMIN'), adminController.createOfflineBooking);
+app.put('/api/admin/venue',
+  requireAuth, requireRole('ROLE_VENUE_ADMIN'), adminController.updateVenue);
+app.post('/api/admin/courts',
+  requireAuth, requireRole('ROLE_VENUE_ADMIN'), adminController.addCourt);
+app.put('/api/admin/courts/:id',
+  requireAuth, requireRole('ROLE_VENUE_ADMIN'), adminController.updateCourt);
+app.delete('/api/admin/courts/:id',
+  requireAuth, requireRole('ROLE_VENUE_ADMIN'), adminController.deleteCourt);
 
 module.exports = app;

@@ -174,7 +174,10 @@ exports.cancelBooking = async (req, res) => {
     }
 
     const venue = await dbAdapter.getVenueById(booking.venueId);
-    const refund = calculateRefund(booking, venue?.cancellationPolicyHours || 24);
+    // The venue cancelling on a customer always refunds in full
+    const refund = ownsBooking
+      ? calculateRefund(booking, venue?.cancellationPolicyHours || 24)
+      : { refundPercent: 100, refundAmount: booking.totalAmount, tierLabel: 'Full refund (cancelled by venue)', currency: '₹' };
 
     const updates = {
       status: 'CANCELLED',

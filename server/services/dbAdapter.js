@@ -1,12 +1,9 @@
 const { supabase, isSupabaseConfigured } = require('../config/supabase');
 const DB = require('../config/db');
 
-// Venues store sports as JSON; derive from courts when it's missing or empty
+// A venue's sports are whatever its courts offer, so listings stay correct as owners edit courts
 function venueSports(v, courts) {
-  let sports = v.sports;
-  if (typeof sports === 'string') { try { sports = JSON.parse(sports); } catch (e) { sports = []; } }
-  if (!Array.isArray(sports) || sports.length === 0) sports = [...new Set(courts.map(c => c.sport))];
-  return sports;
+  return [...new Set(courts.map(c => c.sport))];
 }
 
 const dbAdapter = {
@@ -125,6 +122,46 @@ const dbAdapter = {
     return { ...court, isActive: newStatus };
   },
 
+  // Owner edits. `fields` use camelCase keys; only the ones present are changed.
+  async updateVenue(id, fields) {
+    const columns = {
+      name: 'name', tagline: 'tagline', description: 'description', address: 'address', area: 'area',
+      image: 'image', openingTime: 'opening_time', closingTime: 'closing_time',
+      cancellationPolicyHours: 'cancellation_policy_hours'
+    };
+    if (this.isSupabase()) {
+      const row = {};
+      for (const [key, col] of Object.entries(columns)) if (fields[key] !== undefined) row[col] = fields[key];
+      const { error } = await supabase.from('venues').update(row).eq('id', id);
+      if (error) throw new Error(error.message);
+    }
+    const local = DB.venues.find(v => v.id === id);
+    if (local) Object.assign(local, fields);
+    return this.getVenueById(id);
+  },
+
+  async updateCourt(id, fields) {
+    const columns = { name: 'name', sport: 'sport', surface: 'surface', isIndoor: 'is_indoor', baseRate: 'base_rate' };
+    if (this.isSupabase()) {
+      const row = {};
+      for (const [key, col] of Object.entries(columns)) if (fields[key] !== undefined) row[col] = fields[key];
+      const { error } = await supabase.from('courts').update(row).eq('id', id);
+      if (error) throw new Error(error.message);
+    }
+    const local = DB.courts.find(c => c.id === id);
+    if (local) Object.assign(local, fields);
+    return this.getCourtById(id);
+  },
+
+  async deleteCourt(id) {
+    if (this.isSupabase()) {
+      const { error } = await supabase.from('courts').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+    }
+    const idx = DB.courts.findIndex(c => c.id === id);
+    if (idx !== -1) DB.courts.splice(idx, 1);
+  },
+
   // Users
   async getUserByEmail(email) {
     const cleanEmail = email.trim().toLowerCase();
@@ -203,7 +240,7 @@ const dbAdapter = {
 
   async createCourt(court) {
     if (this.isSupabase()) {
-      await supabase.from('courts').insert([{
+      const { error } = await supabase.from('courts').insert([{
         id: court.id,
         venue_id: court.venueId,
         name: court.name,
@@ -213,6 +250,7 @@ const dbAdapter = {
         base_rate: court.baseRate,
         is_active: court.isActive !== undefined ? court.isActive : true
       }]);
+      if (error) throw new Error(error.message);
     }
     DB.courts.push(court);
     return court;

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TurfSync | Venue Bookings</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase Realtime config (anon/public key) -->
+  <script>
+    window.TURFSYNC_CONFIG = {
+      supabaseUrl: "https://axnfaxcwjovhdrdepcov.supabase.co",
+      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4bmZheGN3am92aGRyZGVwY292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTQ3NjksImV4cCI6MjEwNjc5MDc2OX0.f8-9PY5yCDRWy8kyDiTPhIoSlXgy4hT8fq5AGD0yt6Q"
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase-client.js"></script>
+</head>
+<body>
+
+  <!-- Admin Layout -->
+  <div class="admin-layout">
+    <aside class="admin-sidebar" id="owner-sidebar"></aside>
+
+    <!-- Admin Main Body -->
+    <main class="admin-main">
+      <div class="admin-header">
+        <div class="admin-title-group">
+          <h1>Bookings</h1>
+          <p>Everyone who has booked your courts, online and walk-in.</p>
+        </div>
+      </div>
+
+      <div class="matrix-container">
+        <!-- Filters -->
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+          <div id="booking-tabs" style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+            <button class="btn btn-sm btn-primary" data-filter="TODAY">Today</button>
+            <button class="btn btn-sm btn-outline" data-filter="UPCOMING">Upcoming</button>
+            <button class="btn btn-sm btn-outline" data-filter="PAST">Past</button>
+            <button class="btn btn-sm btn-outline" data-filter="CANCELLED">Cancelled</button>
+            <button class="btn btn-sm btn-outline" data-filter="ALL">All</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+            <select id="booking-court-filter" class="form-control" style="width:auto;min-width:170px;">
+              <option value="">All courts</option>
+            </select>
+            <input type="search" id="booking-search" class="form-control" style="width:auto;min-width:220px;" placeholder="Search name, phone, email or ID">
+          </div>
+        </div>
+
+        <div id="booking-summary" style="font-size:0.875rem;color:var(--text-muted);margin-bottom:0.75rem;"></div>
+
+        <div style="overflow-x:auto;">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Date &amp; Time</th>
+                <th>Court</th>
+                <th>Customer</th>
+                <th>Source</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="owner-bookings-tbody">
+              <!-- Injected via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    let venueId = null;
+    let filter = 'TODAY';
+
+    function initBookingsPage() {
+      const user = TurfStorage.getCurrentUser();
+      if (!user || !TurfStorage.isOwner(user)) {
+        alert('Access restricted: Please log in with a Facility Owner account to view bookings.');
+        window.location.href = 'login.html';
+        return;
+      }
+      venueId = user.venueId;
+      TurfUI.showOwnerVenue(venueId);
+
+      const venue = TurfStorage.getVenueById(venueId);
+      const courtSelect = document.getElementById('booking-court-filter');
+      courtSelect.innerHTML += (venue?.courts || []).map(c =>
+        `<option value="${c.id}">${TurfUI.escapeHtml(c.name)}</option>`).join('');
+
+      document.querySelectorAll('#booking-tabs button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          filter = btn.dataset.filter;
+          document.querySelectorAll('#booking-tabs button').forEach(b =>
+            b.className = `btn btn-sm ${b === btn ? 'btn-primary' : 'btn-outline'}`);
+          renderBookings();
+        });
+      });
+      courtSelect.addEventListener('change', renderBookings);
+      document.getElementById('booking-search').addEventListener('input', renderBookings);
+
+      renderBookings();
+    }
+
+    function renderBookings() {
+      const tbody = document.getElementById('owner-bookings-tbody');
+      const today = TurfUI.getTodayISODate();
+      const courtId = document.getElementById('booking-court-filter').value;
+      const query = document.getElementById('booking-search').value.trim().toLowerCase();
+      const venue = TurfStorage.getVenueById(venueId);
+      const courtName = b => venue?.courts.find(c => c.id === b.courtId)?.name || b.courtName;
+
+      let list = TurfStorage.getBookings().filter(b => b.venueId === venueId);
+      if (filter === 'TODAY') list = list.filter(b => b.date === today && b.status !== 'CANCELLED');
+      if (filter === 'UPCOMING') list = list.filter(b => TurfStorage.isUpcoming(b));
+      if (filter === 'PAST') list = list.filter(b => b.status === 'CONFIRMED' && !TurfStorage.isUpcoming(b));
+      if (filter === 'CANCELLED') list = list.filter(b => b.status === 'CANCELLED');
+      if (courtId) list = list.filter(b => b.courtId === courtId);
+      if (query) {
+        list = list.filter(b => [b.id, b.userName, b.userEmail, b.userPhone, courtName(b)]
+          .some(v => (v || '').toLowerCase().includes(query)));
+      }
+
+      // Soonest first for today/upcoming, most recent first otherwise
+      const key = b => `${b.date}${b.startTime}`;
+      list.sort((a, b) => ['TODAY', 'UPCOMING'].includes(filter) ? key(a).localeCompare(key(b)) : key(b).localeCompare(key(a)));
+
+      const revenue = list.filter(b => b.status === 'CONFIRMED').reduce((s, b) => s + (b.totalAmount || 0), 0);
+      document.getElementById('booking-summary').textContent =
+        `${list.length} booking${list.length === 1 ? '' : 's'} · ₹${revenue.toLocaleString('en-IN')} confirmed`;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">No bookings here.</td></tr>`;
+        return;
+      }
+
+      const esc = TurfUI.escapeHtml;
+      tbody.innerHTML = list.map(b => {
+        const upcoming = TurfStorage.isUpcoming(b);
+        const walkIn = (b.id || '').startsWith('TS-OFFLINE');
+        const status = b.status === 'CANCELLED' ? ['badge-red', 'Cancelled'] : upcoming ? ['badge-green', 'Upcoming'] : ['badge-gray', 'Completed'];
+        return `
+          <tr>
+            <td>
+              <strong>${TurfUI.formatDate(b.date)}</strong>
+              <div style="font-size:0.8rem;color:var(--text-muted);">${TurfUI.formatTime(b.startTime)} – ${TurfUI.formatTime(b.endTime === '24:00' ? '00:00' : b.endTime)}</div>
+            </td>
+            <td>${esc(courtName(b))}<div style="font-size:0.75rem;color:var(--text-muted);">${esc(b.sport)}</div></td>
+            <td>
+              <strong>${esc(b.userName)}</strong>
+              <div style="font-size:0.8rem;color:var(--text-muted);">
+                ${b.userPhone ? `<a href="tel:${esc(b.userPhone)}">${esc(b.userPhone)}</a>` : ''}
+                ${!walkIn && b.userEmail ? `<div><a href="mailto:${esc(b.userEmail)}">${esc(b.userEmail)}</a></div>` : ''}
+              </div>
+            </td>
+            <td><span class="badge ${walkIn ? 'badge-amber' : 'badge-blue'}">${walkIn ? 'Walk-in' : 'Online'}</span></td>
+            <td>₹${Number(b.totalAmount || 0).toLocaleString('en-IN')}
+              ${b.status === 'CANCELLED' && b.refundAmount ? `<div style="font-size:0.75rem;color:var(--text-muted);">Refunded ₹${Number(b.refundAmount).toLocaleString('en-IN')}</div>` : ''}
+            </td>
+            <td><span class="badge ${status[0]}">${status[1]}</span></td>
+            <td style="text-align:right;">
+              ${upcoming ? `<button class="btn btn-sm btn-outline" style="color:var(--accent-red);border-color:rgba(239,68,68,0.35);" onclick="cancelOwnerBooking('${b.id}')">Cancel</button>` : ''}
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function cancelOwnerBooking(id) {
+      const booking = TurfStorage.getBookingById(id);
+      if (!booking) return;
+      const ok = confirm(`Cancel ${booking.userName}'s booking on ${TurfUI.formatDate(booking.date)} at ${TurfUI.formatTime(booking.startTime)}?\n\n` +
+        `Venue cancellations refund the customer in full: ₹${Number(booking.totalAmount).toLocaleString('en-IN')}.`);
+      if (!ok) return;
+      const res = await TurfAPI.cancelBooking(id, 'Cancelled by venue');
+      if (!res.success) {
+        TurfUI.showToast(res.error, 'error');
+        return;
+      }
+      TurfUI.showToast('Booking cancelled.', 'success');
+      renderBookings();
+    }
+
+    TurfAPI.onReady(initBookingsPage);
+  </script>
+</body>
+</html>

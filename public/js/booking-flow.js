@@ -60,9 +60,9 @@ const TurfBookingFlow = {
       return `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:1rem 0;border-bottom:1px solid var(--border);">
           <div>
-            <div style="font-weight:700;font-size:1rem;color:var(--secondary);">${slot.courtName}</div>
+            <div style="font-weight:700;font-size:1rem;color:var(--secondary);">${TurfUI.escapeHtml(slot.courtName)}</div>
             <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.2rem;">
-              📍 ${slot.venueName} &bull; ⚽ ${slot.sport}
+              📍 ${TurfUI.escapeHtml(slot.venueName)} &bull; ⚽ ${slot.sport}
             </div>
             <div style="font-size:0.825rem;color:var(--primary-dark);font-weight:600;margin-top:0.25rem;">
               📅 ${TurfUI.formatDate(slot.dateStr)} at ${TurfUI.formatTime(slot.timeStr)} (1 Hour)
@@ -200,8 +200,8 @@ const TurfBookingFlow = {
           <span class="badge badge-green">Confirmed Pass</span>
           <strong style="color:var(--secondary);font-family:monospace;font-size:1rem;">#${b.id}</strong>
         </div>
-        <h3 style="margin-top:0.6rem;font-size:1.15rem;color:var(--secondary);">${b.courtName}</h3>
-        <p style="font-size:0.875rem;color:var(--text-muted);">📍 ${b.venueName}</p>
+        <h3 style="margin-top:0.6rem;font-size:1.15rem;color:var(--secondary);">${TurfUI.escapeHtml(b.courtName)}</h3>
+        <p style="font-size:0.875rem;color:var(--text-muted);">📍 ${TurfUI.escapeHtml(b.venueName)}</p>
         <div style="margin-top:0.75rem;font-size:0.9rem;font-weight:600;color:var(--primary-dark);">
           📅 ${TurfUI.formatDate(b.date)} &bull; ⏰ ${TurfUI.formatTime(b.startTime)} - ${TurfUI.formatTime(b.endTime)}
         </div>
