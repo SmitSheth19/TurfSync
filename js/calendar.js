@@ -5,8 +5,8 @@
  */
 
 const TurfCalendar = {
-  currentVenueId: 'venue-1',
-  selectedCourtId: 'court-1',
+  currentVenueId: null,
+  selectedCourtId: null,
   weekStartDate: null,
   selectedSlots: [], // Array of { courtId, courtName, dateStr, timeStr, price, surgeBadge }
   isRecurring: false,
@@ -23,6 +23,12 @@ const TurfCalendar = {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('venue')) this.currentVenueId = urlParams.get('venue');
     if (urlParams.get('court')) this.selectedCourtId = urlParams.get('court');
+
+    // A venue must be chosen first
+    if (!TurfStorage.getVenueById(this.currentVenueId)) {
+      window.location.replace('venues.html');
+      return;
+    }
 
     this.renderCourtTabs();
     this.renderWeek();
@@ -85,9 +91,13 @@ const TurfCalendar = {
     const venueTaglineEl = document.getElementById('venue-tagline-header');
     if (venueTaglineEl) venueTaglineEl.textContent = venue.tagline;
 
-    container.innerHTML = venue.courts.map((court, idx) => {
-      const isSelected = court.id === this.selectedCourtId || (!this.selectedCourtId && idx === 0);
-      if (isSelected) this.selectedCourtId = court.id;
+    // Fall back to the venue's first court when none (or another venue's court) is selected
+    if (!venue.courts.some(c => c.id === this.selectedCourtId)) {
+      this.selectedCourtId = venue.courts[0]?.id || null;
+    }
+
+    container.innerHTML = venue.courts.map(court => {
+      const isSelected = court.id === this.selectedCourtId;
 
       const sportEmoji = court.sport === 'FOOTBALL' ? '⚽' : court.sport === 'CRICKET' ? '🏏' : court.sport === 'BADMINTON' ? '🏸' : court.sport === 'TENNIS' ? '🎾' : '🏓';
 
