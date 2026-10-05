@@ -87,8 +87,8 @@
       <div class="matrix-container">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem;">
           <div>
-            <h2 style="font-size:1.25rem;font-weight:800;color:var(--secondary);">Weekly Hourly Demand Heatmap (6 AM - 10 PM)</h2>
-            <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.2rem;">Darker green cells represent high-occupancy rush hours.</p>
+            <h2 style="font-size:1.25rem;font-weight:800;color:var(--secondary);">Hourly Demand Heatmap</h2>
+            <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.2rem;">Share of court-hours booked, by weekday and hour, over the last 4 and next 4 weeks.</p>
           </div>
 
           <!-- Heatmap Legend -->
@@ -114,7 +114,7 @@
         <!-- Sport Popularity Distribution -->
         <div class="card">
           <h3 style="font-size:1.15rem;font-weight:800;color:var(--secondary);margin-bottom:0.35rem;">Sport Category Popularity</h3>
-          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.5rem;">Share of total bookings across sport disciplines.</p>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.5rem;">Share of this venue's confirmed bookings by sport.</p>
 
           <div id="sport-distribution-list">
             <!-- Injected via TurfAnalytics -->
@@ -123,19 +123,11 @@
 
         <!-- Strategic Recommendations -->
         <div class="card" style="background:#f8fafc;border:1px solid var(--border);">
-          <h3 style="font-size:1.15rem;font-weight:800;color:var(--secondary);margin-bottom:0.35rem;">⚡ AI Pricing Recommendations</h3>
-          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;">Automated tips based on current court utilization.</p>
+          <h3 style="font-size:1.15rem;font-weight:800;color:var(--secondary);margin-bottom:0.35rem;">⚡ Pricing Suggestions</h3>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.25rem;">Based on this venue's bookings over the last 4 and next 4 weeks.</p>
 
-          <div style="display:flex;flex-direction:column;gap:0.75rem;">
-            <div style="padding:0.75rem;background:#fff;border-radius:var(--radius-md);border-left:4px solid var(--accent-amber);">
-              <div style="font-weight:700;font-size:0.9rem;color:var(--secondary);">High Demand: Friday & Saturday 19:00 - 22:00</div>
-              <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">Utilization exceeds 90%. Recommend increasing surge multiplier from 1.25x to 1.35x.</div>
-            </div>
-
-            <div style="padding:0.75rem;background:#fff;border-radius:var(--radius-md);border-left:4px solid var(--primary);">
-              <div style="font-weight:700;font-size:0.9rem;color:var(--secondary);">Opportunity: Weekday Afternoons 13:00 - 16:00</div>
-              <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.2rem;">Utilization is under 20%. Recommend an "Afternoon Student Discount" (0.80x multiplier).</div>
-            </div>
+          <div id="pricing-tips" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <!-- Injected via TurfAnalytics -->
           </div>
         </div>
 

@@ -42,24 +42,24 @@ app.get('/api/venues',               venueController.getAllVenues);
 app.get('/api/venues/:id',           venueController.getVenueById);
 app.get('/api/venues/:id/courts',    venueController.getVenueCourts);
 app.get('/api/venues/:id/reviews',   venueController.getVenueReviews);
-app.post('/api/venues/:id/reviews',  venueController.addReview);
+app.post('/api/venues/:id/reviews',  requireAuth, venueController.addReview);
 
 // Bookings & Slots
 app.get('/api/bookings/slots',        bookingController.getSlotMatrix);
-app.post('/api/bookings/confirm',     bookingController.confirmBooking);
-app.post('/api/bookings/:id/cancel',  bookingController.cancelBooking);
-app.get('/api/bookings/my',           bookingController.getMyBookings);
-app.get('/api/bookings/stats',        bookingController.getPlayerStats);
+app.post('/api/bookings/confirm',     requireAuth, bookingController.confirmBooking);
+app.post('/api/bookings/:id/cancel',  requireAuth, bookingController.cancelBooking);
+app.get('/api/bookings/my',           requireAuth, bookingController.getMyBookings);
+app.get('/api/bookings/stats',        requireAuth, bookingController.getPlayerStats);
 
 // Dynamic Pricing
 app.get('/api/pricing',         pricingController.getRules);
-app.post('/api/pricing',        pricingController.addRule);
-app.delete('/api/pricing/:id',  pricingController.deleteRule);
+app.post('/api/pricing',        requireAuth, requireRole('ROLE_VENUE_ADMIN'), pricingController.addRule);
+app.delete('/api/pricing/:id',  requireAuth, requireRole('ROLE_VENUE_ADMIN'), pricingController.deleteRule);
 
 // Waitlist
-app.get('/api/waitlist/my',      waitlistController.getMyWaitlist);
-app.post('/api/waitlist',        waitlistController.joinWaitlist);
-app.delete('/api/waitlist/:id',  waitlistController.cancelWaitlist);
+app.get('/api/waitlist/my',      requireAuth, waitlistController.getMyWaitlist);
+app.post('/api/waitlist',        requireAuth, waitlistController.joinWaitlist);
+app.delete('/api/waitlist/:id',  requireAuth, waitlistController.cancelWaitlist);
 
 // Admin — Owner Only
 app.get('/api/admin/stats',

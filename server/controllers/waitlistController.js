@@ -2,7 +2,7 @@ const dbAdapter = require('../services/dbAdapter');
 
 exports.getMyWaitlist = async (req, res) => {
   try {
-    const email = req.query.email || (req.user ? req.user.email : 'player@turfsync.com');
+    const email = req.user.email;
     const userWaitlists = await dbAdapter.getWaitlist({ userEmail: email });
     res.json(userWaitlists);
   } catch (err) {
@@ -24,9 +24,9 @@ exports.joinWaitlist = async (req, res) => {
       venueId: venueId || 'venue-1',
       bookingDate,
       startTime,
-      userId: req.user ? req.user.id : (req.body.userId || 'user-1'),
-      userName: req.user ? req.user.fullName : (req.body.userName || 'Alex Morgan'),
-      userEmail: req.user ? req.user.email : (req.body.userEmail || 'player@turfsync.com'),
+      userId: req.user.id,
+      userName: req.body.userName || req.user.fullName,
+      userEmail: req.user.email,
       userPhone: req.body.userPhone || null,
       status: 'WAITING',
       createdAt: new Date().toISOString(),
@@ -41,6 +41,10 @@ exports.joinWaitlist = async (req, res) => {
 
 exports.cancelWaitlist = async (req, res) => {
   try {
+    const mine = await dbAdapter.getWaitlist({ userEmail: req.user.email });
+    if (!mine.some(w => w.id === req.params.id)) {
+      return res.status(404).json({ error: 'Waitlist entry not found.' });
+    }
     await dbAdapter.deleteWaitlist(req.params.id);
     res.status(204).end();
   } catch (err) {

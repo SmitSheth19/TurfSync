@@ -1,4 +1,8 @@
 const dbAdapter = require('../services/dbAdapter');
+const { calculateSlotPrice } = require('../services/pricingEngine');
+const { todayIST, slotStart } = require('../services/time');
+
+const openHours = v => parseInt(v.closingTime, 10) - parseInt(v.openingTime, 10);
 
 let wsBroadcaster = null;
 exports.setWsBroadcaster = (fn) => { wsBroadcaster = fn; };
@@ -14,13 +18,13 @@ exports.getStats = async (req, res) => {
 
     const venueCourts = await dbAdapter.getCourts(venueId);
     const bookings = await dbAdapter.getBookings({ venueId, status: 'CONFIRMED' });
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = todayIST();
     const todayBookings = bookings.filter(b => b.bookingDate === todayStr);
 
     const totalRevenue = bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
     const todayRevenue = todayBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
 
-    const totalCourtHours = venueCourts.length * 17; // 6am to 11pm
+    const totalCourtHours = venueCourts.length * openHours(venue);
     const utilizationRate = totalCourtHours > 0 ? Math.round((todayBookings.length / totalCourtHours) * 100) : 0;
 
     res.json({
@@ -45,7 +49,7 @@ exports.getCourts = async (req, res) => {
     const venueId = req.user?.venueId;
     if (!venueId) return res.status(403).json({ error: 'Access denied.' });
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = todayIST();
     const courts = await dbAdapter.getCourts(venueId);
     const todayBookings = await dbAdapter.getBookings({ venueId, date: todayStr, status: 'CONFIRMED' });
 
@@ -99,9 +103,18 @@ exports.createOfflineBooking = async (req, res) => {
     const venue = await dbAdapter.getVenueById(venueId);
     const startH = parseInt(startTime.split(':')[0]);
     const endTime = String(startH + 1).padStart(2, '0') + ':00';
+    if (startTime < venue.openingTime || startTime >= venue.closingTime) {
+      return res.status(400).json({ error: 'The venue is closed at that time.' });
+    }
+    // Walk-ins may be recorded for the hour in progress, but not for hours already over
+    if (slotStart(bookingDate, endTime === '24:00' ? '23:59' : endTime) <= new Date()) {
+      return res.status(400).json({ error: 'That slot is already over.' });
+    }
+    const rules = await dbAdapter.getPricingRules(venueId);
+    const price = calculateSlotPrice(court, bookingDate, startTime, rules).finalPrice;
 
     const newBooking = {
-      id: 'TS-OFFLINE-' + Date.now().toString().slice(-4),
+      id: 'TS-OFFLINE-' + Date.now().toString().slice(-7),
       venueId,
       courtId,
       courtName: court.name,
@@ -114,8 +127,8 @@ exports.createOfflineBooking = async (req, res) => {
       bookingDate,
       startTime,
       endTime,
-      baseAmount: court.baseRate,
-      totalAmount: court.baseRate,
+      baseAmount: price,
+      totalAmount: Math.round(price * 1.18),
       status: 'CONFIRMED',
       paymentStatus: 'SUCCEEDED',
       paymentMethod: 'Cash / On-Site',

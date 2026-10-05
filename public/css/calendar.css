@@ -250,6 +250,15 @@
   font-weight: 700;
 }
 
+/* State: Past hour or blocked court — not bookable */
+.slot-past .slot-btn {
+  background-color: var(--bg-subtle);
+  border-color: var(--border);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* State: Booked / Occupied */
 .slot-booked .slot-btn {
   background-color: var(--accent-red-light);

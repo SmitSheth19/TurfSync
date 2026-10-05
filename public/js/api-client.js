@@ -277,15 +277,19 @@ const TurfAPI = {
           headers: this.getAuthHeaders(),
           body: JSON.stringify({ reason })
         });
+        const data = await res.json().catch(() => ({}));
         if (res.ok) {
-          const booking = await res.json();
           TurfStorage.cancelBooking(bookingId, reason); // Sync local storage
-          return { success: true, booking };
+          return { success: true, booking: data.booking, refund: data.refund };
         }
+        return { success: false, error: data.error || 'Cancellation failed.' };
       } catch (e) {
         console.warn('Backend cancellation failed, falling back to local storage:', e);
       }
     }
-    return TurfStorage.cancelBooking(bookingId, reason);
+    const local = TurfStorage.cancelBooking(bookingId, reason);
+    return local ? { success: true, booking: local.booking, refund: local.refundInfo } : { success: false, error: 'Booking not found.' };
   }
 };
+
+window.TurfAPI = TurfAPI;

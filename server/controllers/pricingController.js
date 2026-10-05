@@ -14,11 +14,15 @@ exports.getRules = async (req, res) => {
 };
 
 exports.addRule = async (req, res) => {
-  const venueId = (req.user && req.user.venueId) ? req.user.venueId : req.body.venueId;
+  const venueId = req.user.venueId;
+  if (!req.body.name || !/^\d{2}:\d{2}$/.test(req.body.startTime || '') || !/^\d{2}:\d{2}$/.test(req.body.endTime || '')
+      || !(Number(req.body.multiplier) > 0)) {
+    return res.status(400).json({ error: 'Name, start/end time and a positive multiplier are required.' });
+  }
   const { name, days, startTime, endTime, multiplier, badgeText } = req.body;
   const newRule = {
     id: /^rule-\d+$/.test(req.body.id) ? req.body.id : `rule-${Date.now()}`,
-    venueId, name, days, startTime, endTime, multiplier, badgeText
+    venueId, name, days: days || '1,2,3,4,5,6,7', startTime, endTime, multiplier: Number(multiplier), badgeText
   };
   try {
     await dbAdapter.createPricingRule(newRule);
@@ -33,7 +37,7 @@ exports.deleteRule = async (req, res) => {
     const allRules = await dbAdapter.getPricingRules();
     const rule = allRules.find(r => r.id === req.params.id);
     if (rule) {
-      if (req.user && req.user.venueId && rule.venueId !== req.user.venueId) {
+      if (rule.venueId !== req.user.venueId) {
         return res.status(403).json({ error: 'Unauthorized to delete this pricing rule.' });
       }
       await dbAdapter.deletePricingRule(req.params.id);

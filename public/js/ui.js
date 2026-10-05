@@ -79,6 +79,16 @@ const TurfUI = {
     return `${year}-${month}-${day}`;
   },
 
+  // "1,2,3,4,5" -> "Mon–Fri"; days are 1=Mon..7=Sun
+  formatRuleDays(days) {
+    const d = String(days || '1,2,3,4,5,6,7');
+    if (d === '1,2,3,4,5,6,7') return 'Every day';
+    if (d === '1,2,3,4,5') return 'Mon–Fri';
+    if (d === '6,7') return 'Sat–Sun';
+    const names = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return d.split(',').map(n => names[Number(n)] || n).join(', ');
+  },
+
   getTodayISODate() {
     return this.formatISODate(new Date());
   },

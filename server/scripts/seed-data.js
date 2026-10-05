@@ -14,7 +14,7 @@ const venues = [
     description: 'Two 6v6 football turfs and a badminton hall a short walk from Powai Lake.' },
   { id: 'venue-5',  name: 'Champions Turf Malad',             area: 'Malad West',     address: 'Mindspace Road, behind Inorbit Mall',           tagline: 'Multi-sport hub for the western suburbs',          image: IMG('1543351611-58f69d7c1781'), open: '06:00', close: '23:00', policy: 12,
     description: 'Football, box cricket and badminton under one roof, with free parking.' },
-  { id: 'venue-6',  name: 'ProSports Arena Vashi',            area: 'Vashi',          address: 'Sector 17, Palm Beach Road, Navi Mumbai',       tagline: "Navi Mumbai's biggest sports complex",            image: IMG('1459865264687-595d652de67e'), open: '05:30', close: '23:00', policy: 24,
+  { id: 'venue-6',  name: 'ProSports Arena Vashi',            area: 'Vashi',          address: 'Sector 17, Palm Beach Road, Vashi',       tagline: "Navi Mumbai's biggest sports complex",            image: IMG('1459865264687-595d652de67e'), open: '05:30', close: '23:00', policy: 24,
     description: 'Full-size football turf, cricket nets, tennis and badminton courts across one campus.' },
   { id: 'venue-7',  name: 'Kick Factory Borivali',            area: 'Borivali West',  address: 'Rooftop, Chamunda Circle, S.V. Road',           tagline: 'Rooftop turf next to Borivali station',            image: IMG('1575361204480-aadea25e6e68'), open: '06:00', close: '24:00', policy: 6,
     description: 'Well-lit rooftop turfs two minutes from the station, ideal for after-work games.' },
@@ -142,6 +142,7 @@ reviews.forEach((r, i) => { r.id = `rev-${i + 1}`; });
 
 // Bookings: past, upcoming and a few cancellations spread across players and venues
 const hhmm = h => `${String(h).padStart(2, '0')}:00`;
+const { calculateSlotPrice } = require('../services/pricingEngine');
 const bookings = [];
 const bookingPlan = [
   // [playerIdx, courtIdx, dayOffset, startHour, status]
@@ -160,15 +161,16 @@ const bookingPlan = [
 bookingPlan.forEach(([pi, ci, dayOffset, hour, status], i) => {
   const p = players[pi], c = courts[ci], v = venues.find(x => x.id === c.venueId);
   const d = new Date(); d.setDate(d.getDate() + dayOffset);
-  const peak = hour >= 18 && hour < 22 ? 1.3 : 1;
-  const total = Math.round(c.baseRate * peak);
+  // Same pricing as checkout: venue rules applied to the base rate, then 18% GST
+  const price = calculateSlotPrice(c, d.toISOString().slice(0, 10), hhmm(hour), pricingRules.filter(r => r.venueId === v.id)).finalPrice;
+  const total = Math.round(price * 1.18);
   const cancelled = status === 'CANCELLED';
   bookings.push({
     id: `TS-${d.getFullYear()}-${9001 + i}`,
     venueId: v.id, courtId: c.id, courtName: c.name, sport: c.sport, venueName: v.name,
     userId: p.id, userName: p.fullName, userEmail: p.email, userPhone: p.phone,
     bookingDate: d.toISOString().slice(0, 10), startTime: hhmm(hour), endTime: hhmm(hour + 1),
-    baseAmount: c.baseRate, totalAmount: total,
+    baseAmount: price, totalAmount: total,
     status, paymentStatus: cancelled ? 'REFUNDED' : 'SUCCEEDED', paymentMethod: 'Stripe Card (•••• 4242)',
     cancellationReason: cancelled ? 'Team could not make it' : null,
     cancelledAt: cancelled ? new Date().toISOString() : null,

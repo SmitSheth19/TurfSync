@@ -81,7 +81,7 @@
             </div>
 
             <div style="display:flex;align-items:flex-end;">
-              <button class="btn btn-primary btn-block" style="height:42px;" onclick="window.location.href='venues.html'">
+              <button class="btn btn-primary btn-block" style="height:42px;" onclick="searchTurfs()">
                 Search Turfs &rarr;
               </button>
             </div>
@@ -202,18 +202,28 @@
   <script src="js/api-client.js"></script>
   <script src="js/ui.js"></script>
   <script>
+    // Hand the hero search over to the venues list (sport filter + chosen date)
+    function searchTurfs() {
+      const params = new URLSearchParams();
+      const sport = document.getElementById('hero-sport-select').value;
+      const date = document.getElementById('hero-date-input').value;
+      if (sport && sport !== 'ALL') params.set('sport', sport);
+      if (date) params.set('date', date);
+      window.location.href = 'venues.html' + (params.toString() ? '?' + params : '');
+    }
+
     TurfAPI.onReady(() => {
       // Set today's date in hero datepicker
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = TurfUI.getTodayISODate();
       const dateInput = document.getElementById('hero-date-input');
-      if (dateInput) dateInput.value = todayStr;
+      if (dateInput) { dateInput.value = todayStr; dateInput.min = todayStr; }
 
       // Render featured venues
       const venues = TurfStorage.getVenues();
       const grid = document.getElementById('featured-venues-grid');
       if (grid) {
         grid.innerHTML = venues.map(venue => {
-          const startingRate = Math.min(...venue.courts.map(c => c.baseRate));
+          const startingRate = Math.min(...venue.courts.filter(c => c.isActive !== false).map(c => c.baseRate));
           const sportsBadges = venue.sports.map(s => `<span class="badge badge-green">${s}</span>`).join(' ');
 
           return `
@@ -221,7 +231,7 @@
               <div style="height:200px;position:relative;background-color:#1e293b;">
                 <img src="${venue.image}" alt="${venue.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&w=800&q=80'">
                 <div style="position:absolute;top:1rem;right:1rem;">
-                  <span class="badge badge-amber" style="box-shadow:var(--shadow-md);">⭐ ${venue.rating} (${venue.reviewCount})</span>
+                  <span class="badge badge-amber" style="box-shadow:var(--shadow-md);">${venue.reviewCount ? `⭐ ${venue.rating} (${venue.reviewCount})` : '✨ New'}</span>
                 </div>
               </div>
 

@@ -9,12 +9,12 @@ exports.login = async (req, res) => {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
-  const user = await dbAdapter.getUserByEmail(email);
+  const user = await dbAdapter.getUserByEmail(email.trim());
   if (!user) {
     return res.status(401).json({ error: 'No account found with this email.' });
   }
 
-  const valid = bcrypt.compareSync(password, user.passwordHash) || password === 'password123' || password === 'admin123';
+  const valid = !!user.passwordHash && bcrypt.compareSync(password, user.passwordHash);
   if (!valid) {
     return res.status(401).json({ error: 'Incorrect password. Please try again.' });
   }
@@ -43,6 +43,9 @@ exports.register = async (req, res) => {
   if (!email || !password || !fullName) {
     return res.status(400).json({ error: 'Full name, email, and password are required.' });
   }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+  }
 
   const existing = await dbAdapter.getUserByEmail(email);
   if (existing) {
@@ -52,39 +55,39 @@ exports.register = async (req, res) => {
   const userRole = role === 'ROLE_VENUE_ADMIN' || role === 'VENUE_ADMIN' ? 'ROLE_VENUE_ADMIN' : 'ROLE_PLAYER';
   const userId = userRole === 'ROLE_VENUE_ADMIN' ? `admin-${Date.now()}` : `user-${Date.now()}`;
 
-  let assignedVenueId = venueId;
+  // New owners always register a new facility; existing venues cannot be claimed
+  let assignedVenueId = null;
   if (userRole === 'ROLE_VENUE_ADMIN') {
-    if (req.body.venueName) {
-      assignedVenueId = `venue-${Date.now()}`;
-      const newVenue = {
-        id: assignedVenueId,
-        name: req.body.venueName,
-        tagline: `Premier Sports Arena in Mumbai`,
-        description: `Modern sports facility managed by ${fullName}.`,
-        address: "Sports Hub, Mumbai",
-        city: "Mumbai",
-        area: "Mumbai",
-        rating: 5.0,
-        reviewCount: 0,
-        cancellationPolicyHours: 24,
-        openingTime: "06:00",
-        closingTime: "23:00",
-        image: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&w=800&q=80"
-      };
-      await dbAdapter.createVenue(newVenue);
-      await dbAdapter.createCourt({
-        id: `court-${Date.now()}-1`,
-        venueId: assignedVenueId,
-        name: "Main Arena Turf",
-        sport: "FOOTBALL",
-        surface: "FIFA Pro AstroTurf",
-        isIndoor: false,
-        baseRate: 1500,
-        isActive: true
-      });
-    } else {
-      assignedVenueId = assignedVenueId || 'venue-1';
+    if (!req.body.venueName || !req.body.venueName.trim()) {
+      return res.status(400).json({ error: 'Facility name is required for owner accounts.' });
     }
+    assignedVenueId = `venue-${Date.now()}`;
+    const newVenue = {
+      id: assignedVenueId,
+      name: req.body.venueName,
+      tagline: `Premier Sports Arena in Mumbai`,
+      description: `Modern sports facility managed by ${fullName}.`,
+      address: "Address to be updated",
+      city: "Mumbai",
+      area: "Mumbai",
+      rating: 0,
+      reviewCount: 0,
+      cancellationPolicyHours: 24,
+      openingTime: "06:00",
+      closingTime: "23:00",
+      image: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&w=800&q=80"
+    };
+    await dbAdapter.createVenue(newVenue);
+    await dbAdapter.createCourt({
+      id: `court-${Date.now()}-1`,
+      venueId: assignedVenueId,
+      name: "Main Arena Turf",
+      sport: "FOOTBALL",
+      surface: "FIFA Pro AstroTurf",
+      isIndoor: false,
+      baseRate: 1500,
+      isActive: true
+    });
   }
 
   const newUser = {

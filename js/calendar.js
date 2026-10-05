@@ -12,8 +12,11 @@ const TurfCalendar = {
   isRecurring: false,
 
   init() {
-    // Determine current Monday as the start of the week
-    const now = new Date();
+    // Start on the Monday of ?date= (from the home page search) or of today
+    const urlDate = new URLSearchParams(window.location.search).get('date');
+    const now = /^\d{4}-\d{2}-\d{2}$/.test(urlDate || '') && new Date(urlDate + 'T00:00:00') >= new Date(new Date().toDateString())
+      ? new Date(urlDate + 'T00:00:00')
+      : new Date();
     const day = now.getDay(); // 0 is Sun, 1 is Mon
     const diffToMonday = now.getDate() - day + (day === 0 ? -6 : 1);
     this.weekStartDate = new Date(now.setDate(diffToMonday));
@@ -90,6 +93,10 @@ const TurfCalendar = {
     if (venueNameEl) venueNameEl.textContent = venue.name;
     const venueTaglineEl = document.getElementById('venue-tagline-header');
     if (venueTaglineEl) venueTaglineEl.textContent = venue.tagline;
+    const hoursEl = document.getElementById('venue-hours-header');
+    if (hoursEl) hoursEl.textContent = `Open ${TurfUI.formatTime(venue.openingTime)} - ${TurfUI.formatTime(venue.closingTime === '24:00' ? '00:00' : venue.closingTime)}`;
+    const policyEl = document.getElementById('venue-policy-header');
+    if (policyEl) policyEl.textContent = `100% Refund (>${venue.cancellationPolicyHours || 24}h notice)`;
 
     // Fall back to the venue's first court when none (or another venue's court) is selected
     if (!venue.courts.some(c => c.id === this.selectedCourtId)) {
@@ -105,7 +112,7 @@ const TurfCalendar = {
         <button class="court-tab ${isSelected ? 'active' : ''}" data-court-id="${court.id}">
           <span>${sportEmoji}</span>
           <span>${court.name}</span>
-          <span class="badge ${isSelected ? 'badge-green' : 'badge-gray'}" style="margin-left:0.3rem;">₹${court.baseRate}/hr</span>
+          <span class="badge ${isSelected ? 'badge-green' : 'badge-gray'}" style="margin-left:0.3rem;">${court.isActive === false ? 'Blocked' : `₹${court.baseRate}/hr`}</span>
         </button>
       `;
     }).join('');
@@ -189,8 +196,18 @@ const TurfCalendar = {
 
         let cellClass = 'slot-available';
         let slotContent = '';
+        let clickStatus = slotStatus;
+        const isPast = new Date(`${day.isoDate}T${timeStr}:00+05:30`) <= new Date();
 
-        if (slotStatus === 'CONFIRMED') {
+        if (court && court.isActive === false) {
+          cellClass = 'slot-past';
+          clickStatus = 'BLOCKED';
+          slotContent = `<span class="slot-booked-label">BLOCKED</span>`;
+        } else if (isPast) {
+          cellClass = 'slot-past';
+          clickStatus = 'PAST';
+          slotContent = `<span class="slot-booked-label">${slotStatus === 'CONFIRMED' ? 'BOOKED' : '—'}</span>`;
+        } else if (slotStatus === 'CONFIRMED') {
           cellClass = 'slot-booked';
           slotContent = `
             <span class="slot-booked-label">BOOKED</span>
@@ -213,7 +230,7 @@ const TurfCalendar = {
 
         html += `
           <div class="slot-cell ${cellClass}" data-date="${day.isoDate}" data-time="${timeStr}">
-            <button class="slot-btn" onclick="TurfCalendar.handleSlotClick('${day.isoDate}', '${timeStr}', '${slotStatus}')">
+            <button class="slot-btn" ${clickStatus === 'PAST' || clickStatus === 'BLOCKED' ? 'disabled' : ''} onclick="TurfCalendar.handleSlotClick('${day.isoDate}', '${timeStr}', '${clickStatus}')">
               ${slotContent}
             </button>
           </div>
@@ -225,6 +242,8 @@ const TurfCalendar = {
   },
 
   handleSlotClick(dateStr, timeStr, status) {
+    if (status === 'PAST' || status === 'BLOCKED') return;
+
     if (status === 'CONFIRMED') {
       this.openWaitlistModal(dateStr, timeStr);
       return;
@@ -291,6 +310,18 @@ const TurfCalendar = {
   },
 
   openWaitlistModal(dateStr, timeStr) {
+    const user = TurfStorage.getCurrentUser();
+    if (!user) {
+      TurfUI.showToast('Please sign in to join the waitlist.', 'info');
+      setTimeout(() => { window.location.href = `login.html?next=${encodeURIComponent('booking.html?venue=' + this.currentVenueId)}`; }, 800);
+      return;
+    }
+    const own = TurfStorage.getBookings().find(b => b.courtId === this.selectedCourtId && b.date === dateStr &&
+      b.startTime === timeStr && b.status === 'CONFIRMED' && b.userEmail === user.email);
+    if (own) {
+      TurfUI.showToast('This slot is already your booking. See it in My Bookings.', 'info');
+      return;
+    }
     const court = TurfStorage.getCourtById(this.selectedCourtId);
     const modal = document.getElementById('waitlist-modal');
     if (!modal) return;
@@ -303,8 +334,7 @@ const TurfCalendar = {
     document.getElementById('wl-date').value = dateStr;
     document.getElementById('wl-time').value = timeStr;
 
-    // Prefill user details if logged in
-    const user = TurfStorage.getCurrentUser();
+    // Prefill user details
     if (user) {
       const nameInput = document.getElementById('wl-user-name');
       const emailInput = document.getElementById('wl-user-email');
@@ -332,6 +362,7 @@ const TurfCalendar = {
 
     TurfAPI.joinWaitlist({
       courtId,
+      venueId: this.currentVenueId,
       date: dateStr,
       startTime: timeStr,
       userName: name,
@@ -345,6 +376,11 @@ const TurfCalendar = {
 
   proceedToCheckout() {
     if (this.selectedSlots.length === 0) return;
+
+    if (TurfStorage.isOwner(TurfStorage.getCurrentUser())) {
+      TurfUI.showToast('Owner accounts cannot book as players. Use "Offline Booking" in your dashboard.', 'warning');
+      return;
+    }
 
     // Save temporary checkout session in localStorage
     const checkoutSession = {

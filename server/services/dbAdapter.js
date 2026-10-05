@@ -422,6 +422,14 @@ const dbAdapter = {
     return entry;
   },
 
+  async updateWaitlistStatus(id, status) {
+    if (this.isSupabase()) {
+      await supabase.from('waitlist').update({ status, notified_at: new Date().toISOString() }).eq('id', id);
+    }
+    const local = DB.waitlist.find(w => w.id === id);
+    if (local) local.status = status;
+  },
+
   async deleteWaitlist(id) {
     if (this.isSupabase()) {
       await supabase.from('waitlist').delete().eq('id', id);

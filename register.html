@@ -220,6 +220,12 @@
       }
     }
 
+    // Already signed in: go to the right home page instead of showing the form
+    (() => {
+      const u = TurfStorage.getCurrentUser();
+      if (u) window.location.replace(TurfStorage.isOwner(u) ? 'admin-dashboard.html' : 'my-bookings.html');
+    })();
+
     function selectRole(role) {
       document.getElementById('selected-role').value = role;
       const playerCard = document.getElementById('role-player-card');
@@ -260,10 +266,15 @@
         return;
       }
 
+      const venueName = document.getElementById('reg-venue-name')?.value.trim();
+      if (role === 'VENUE_ADMIN' && !venueName) {
+        errorBox.textContent = 'Please enter your facility name.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = 'Creating account...';
-
-      const venueName = document.getElementById('reg-venue-name')?.value.trim();
 
       setTimeout(async () => {
         let result;

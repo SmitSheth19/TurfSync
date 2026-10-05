@@ -43,7 +43,7 @@ exports.addReview = async (req, res) => {
     const review = {
       id: /^rev-\d+$/.test(req.body.id) ? req.body.id : `rev-${Date.now()}`,
       venueId: req.params.id,
-      userName: userName || (req.user ? req.user.fullName : 'Verified Player'),
+      userName: req.user.fullName,
       rating: parseInt(rating) || 5,
       comment: comment || '',
       date: new Date().toISOString().split('T')[0]

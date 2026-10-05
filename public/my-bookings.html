@@ -282,8 +282,11 @@
     function renderDashboard() {
       const user = TurfStorage.getCurrentUser();
       if (!user) {
-        alert('Please log in to access your bookings and match passes.');
-        window.location.href = 'login.html';
+        window.location.href = 'login.html?next=my-bookings.html';
+        return;
+      }
+      if (TurfStorage.isOwner(user)) {
+        window.location.href = 'admin-dashboard.html';
         return;
       }
       
@@ -379,8 +382,8 @@
 
       const allBookings = TurfStorage.getUserBookings(user?.email);
 
-      const upcomingCount = allBookings.filter(b => b.status === 'CONFIRMED').length;
-      const pastCount = allBookings.filter(b => b.status === 'CANCELLED').length;
+      const upcomingCount = allBookings.filter(b => TurfStorage.isUpcoming(b)).length;
+      const pastCount = allBookings.length - upcomingCount;
       
       const countUpcomingEl = document.getElementById('count-upcoming');
       const countPastEl = document.getElementById('count-past');
@@ -391,9 +394,9 @@
 
       let displayList = allBookings;
       if (currentFilter === 'UPCOMING') {
-        displayList = allBookings.filter(b => b.status === 'CONFIRMED');
+        displayList = allBookings.filter(b => TurfStorage.isUpcoming(b));
       } else if (currentFilter === 'PAST') {
-        displayList = allBookings.filter(b => b.status === 'CANCELLED');
+        displayList = allBookings.filter(b => !TurfStorage.isUpcoming(b)).reverse();
       }
 
       if (searchQuery.trim()) {
@@ -421,7 +424,8 @@
       }
 
       container.innerHTML = displayList.map(b => {
-        const isConfirmed = b.status === 'CONFIRMED';
+        const isConfirmed = TurfStorage.isUpcoming(b);
+        const isCompleted = b.status === 'CONFIRMED' && !isConfirmed;
         const isCancelled = b.status === 'CANCELLED';
         const refundInfo = TurfStorage.calculateRefund(b);
 
@@ -438,13 +442,13 @@
           <div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1.5rem;border-left:5px solid ${isConfirmed ? 'var(--primary)' : 'var(--accent-red)'};">
             <div style="flex-grow:1;min-width:280px;">
               <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;flex-wrap:wrap;">
-                <span class="badge ${isConfirmed ? 'badge-green' : 'badge-red'}" style="font-weight:800;">
-                  ${b.status}
+                <span class="badge ${isConfirmed ? 'badge-green' : isCompleted ? 'badge-gray' : 'badge-red'}" style="font-weight:800;">
+                  ${isCompleted ? 'COMPLETED' : b.status}
                 </span>
                 <span style="font-family:monospace;font-size:0.875rem;color:var(--text-muted);font-weight:700;background:var(--bg-subtle);padding:0.15rem 0.5rem;border-radius:var(--radius-sm);">
                   #${b.id}
                 </span>
-                ${b.isRecurring ? '<span class="badge badge-blue">Recurring 4-Wk Pass</span>' : ''}
+                ${b.isRecurring ? '<span class="badge badge-blue">Weekly Plan</span>' : ''}
               </div>
 
               <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
@@ -492,6 +496,10 @@
                   Cancel Reservation
                 </button>
               ` : `
+                ${isCompleted ? `
+                <button class="btn btn-outline-primary btn-sm btn-block" onclick="openReviewModal('${b.venueId}', '${b.id}', '${b.venueName}')" style="font-size:0.825rem;">
+                  ⭐ Rate Venue
+                </button>` : ''}
                 <a href="booking.html?venue=${b.venueId}" class="btn btn-primary btn-sm btn-block">
                   Book Slot Again &rarr;
                 </a>
@@ -655,23 +663,18 @@
       const bookingId = document.getElementById('cancel-booking-id').value;
       const reason = document.getElementById('cancel-reason').value;
 
-      let result = null;
-      if (window.TurfAPI) {
-        const res = await TurfAPI.cancelBooking(bookingId, reason);
-        if (res && res.success) {
-          result = res.booking;
-        }
-      }
-      if (!result) {
-        result = TurfStorage.cancelBooking(bookingId, reason);
+      const res = await TurfAPI.cancelBooking(bookingId, reason);
+      if (!res.success) {
+        TurfUI.showToast(res.error, 'error');
+        return;
       }
 
-      if (result) {
-        TurfUI.closeModal('cancel-modal');
-        renderDashboard();
-        const refundAmt = result.refundInfo?.refundAmount !== undefined ? result.refundInfo.refundAmount : (result.refundAmount || 0);
-        TurfUI.showToast(`✓ Booking cancelled. Stripe Refund of ₹${refundAmt.toLocaleString('en-IN')} initiated!`, 'success');
-      }
+      TurfUI.closeModal('cancel-modal');
+      renderDashboard();
+      const refundAmt = res.refund?.refundAmount || 0;
+      TurfUI.showToast(refundAmt > 0
+        ? `✓ Booking cancelled. Refund of ₹${refundAmt.toLocaleString('en-IN')} initiated.`
+        : '✓ Booking cancelled. No refund applies this close to the match.', 'success');
     }
 
     // Venue Review Modal

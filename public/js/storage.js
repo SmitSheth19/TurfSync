@@ -127,14 +127,16 @@ const TurfStorage = {
   },
 
   getUserBookings(userEmail) {
-    const currentUser = this.getCurrentUser();
-    const email = userEmail || currentUser?.email || 'player@turfsync.com';
-    return this.getBookings().filter(b => 
-      b.userEmail === email || 
-      b.userId === currentUser?.id || 
-      b.userEmail === 'alex.player@example.com' ||
-      b.userId === 'user-1'
-    );
+    const email = userEmail || this.getCurrentUser()?.email;
+    if (!email) return [];
+    return this.getBookings()
+      .filter(b => b.userEmail === email)
+      .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`));
+  },
+
+  // Confirmed and not yet started (venue times are Mumbai time)
+  isUpcoming(booking) {
+    return booking.status === 'CONFIRMED' && new Date(`${booking.date}T${booking.startTime}:00+05:30`) > new Date();
   },
 
   isSlotBooked(courtId, dateStr, timeStr) {
@@ -174,23 +176,26 @@ const TurfStorage = {
   },
 
   // Tiered Cancellation Engine
+  // Mirrors server/services/cancellationEngine.js: tiers follow the venue's policy hours
   calculateRefund(booking) {
-    const bookingDateTime = new Date(`${booking.date}T${booking.startTime}:00`);
+    const bookingDateTime = new Date(`${booking.date}T${booking.startTime}:00+05:30`);
     const now = new Date();
     const diffHours = (bookingDateTime - now) / (1000 * 60 * 60);
+    const policyHours = this.getVenueById(booking.venueId)?.cancellationPolicyHours || 24;
+    const halfHours = policyHours / 2;
 
     let refundPercent = 0;
     let tierLabel = '';
 
-    if (diffHours >= 24) {
+    if (diffHours >= policyHours) {
       refundPercent = 100;
-      tierLabel = 'Full Refund (>24h Notice)';
-    } else if (diffHours >= 12 && diffHours < 24) {
+      tierLabel = `Full Refund (>${policyHours}h Notice)`;
+    } else if (diffHours >= halfHours) {
       refundPercent = 50;
-      tierLabel = '50% Partial Refund (12h–24h Notice)';
+      tierLabel = `50% Partial Refund (${halfHours}h–${policyHours}h Notice)`;
     } else {
       refundPercent = 0;
-      tierLabel = 'No Refund (<12h Notice)';
+      tierLabel = `No Refund (<${halfHours}h Notice)`;
     }
 
     const refundAmount = Math.round((booking.totalAmount * refundPercent) / 100);
@@ -216,7 +221,7 @@ const TurfStorage = {
     booking.cancellationReason = reason;
     booking.refundAmount = refundInfo.refundAmount;
     booking.refundPercent = refundInfo.refundPercent;
-    booking.paymentStatus = refundInfo.refundPercent > 0 ? (refundInfo.refundPercent === 100 ? 'REFUNDED' : 'PARTIALLY_REFUNDED') : 'SUCCEEDED';
+    booking.paymentStatus = refundInfo.refundPercent > 0 ? 'REFUNDED' : 'SUCCEEDED';
 
     this.saveData(data);
 
@@ -228,15 +233,9 @@ const TurfStorage = {
 
   // Waitlist System
   getUserWaitlists(userEmail) {
-    const currentUser = this.getCurrentUser();
-    const email = userEmail || currentUser?.email || 'player@turfsync.com';
-    const allWaitlist = this.getData().waitlist || [];
-    return allWaitlist.filter(w => 
-      w.userEmail === email || 
-      w.userId === currentUser?.id || 
-      w.userId === 'user-1' ||
-      w.userEmail === 'alex.player@example.com'
-    );
+    const email = userEmail || this.getCurrentUser()?.email;
+    if (!email) return [];
+    return (this.getData().waitlist || []).filter(w => w.userEmail === email);
   },
 
   joinWaitlist(entry) {
@@ -281,18 +280,18 @@ const TurfStorage = {
     const bookings = this.getUserBookings(userEmail);
     const waitlists = this.getUserWaitlists(userEmail);
 
-    const activeBookings = bookings.filter(b => b.status === 'CONFIRMED');
-    const pastOrCompleted = bookings.filter(b => b.status !== 'CANCELLED');
+    const activeBookings = bookings.filter(b => this.isUpcoming(b));
+    const pastOrCompleted = bookings.filter(b => b.status === 'CONFIRMED' && !this.isUpcoming(b));
     const activeWaitlists = waitlists.filter(w => w.status === 'WAITING' || w.status === 'NOTIFIED');
 
     // Calculate favorite sport
     const sportCounts = {};
-    bookings.forEach(b => {
+    bookings.filter(b => b.status === 'CONFIRMED').forEach(b => {
       const sp = b.sport || 'FOOTBALL';
       sportCounts[sp] = (sportCounts[sp] || 0) + 1;
     });
 
-    let favSport = 'FOOTBALL';
+    let favSport = null;
     let maxCount = 0;
     for (const [sport, count] of Object.entries(sportCounts)) {
       if (count > maxCount) {
@@ -311,9 +310,9 @@ const TurfStorage = {
 
     return {
       activePasses: activeBookings.length,
-      totalMatches: Math.max(pastOrCompleted.length, 3), // include demo match history
+      totalMatches: pastOrCompleted.length,
       activeWaitlists: activeWaitlists.length,
-      favoriteSport: sportDisplayNames[favSport] || favSport,
+      favoriteSport: favSport ? (sportDisplayNames[favSport] || favSport) : '—',
       activeBookings,
       waitlists
     };
@@ -352,7 +351,7 @@ const TurfStorage = {
     const data = this.getData();
     const newReview = {
       id: `rev-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('en-CA'), // local YYYY-MM-DD
       ...review
     };
     data.reviews.unshift(newReview);

@@ -3,6 +3,10 @@ const { calculateSlotPrice } = require('../services/pricingEngine');
 const { calculateRefund } = require('../services/cancellationEngine');
 const concurrencyManager = require('../services/concurrencyManager');
 const { isSupabaseConfigured } = require('../config/supabase');
+const { todayIST, slotStart } = require('../services/time');
+
+const GST_RATE = 0.18;
+const isOwner = user => user && (user.role === 'ROLE_VENUE_ADMIN' || user.role === 'VENUE_ADMIN');
 
 let wsBroadcaster = null;
 
@@ -52,11 +56,22 @@ exports.getSlotMatrix = async (req, res) => {
 
 // Confirm Booking — Atomic Concurrency via DB unique index (Supabase) or in-memory mutex (local)
 exports.confirmBooking = async (req, res) => {
-  const { courtId, venueId, startTime, endTime, totalAmount, sport, courtName, venueName, isRecurring } = req.body;
+  const { courtId, startTime, isRecurring } = req.body;
   const bookingDate = req.body.bookingDate || req.body.date;
 
-  if (!courtId || !bookingDate || !startTime) {
+  if (!courtId || !bookingDate || !/^\d{2}:00$/.test(startTime || '')) {
     return res.status(400).json({ error: 'courtId, bookingDate, and startTime are required.' });
+  }
+
+  const court = await dbAdapter.getCourtById(courtId);
+  const venue = court && await dbAdapter.getVenueById(court.venueId);
+  if (!court || !venue) return res.status(404).json({ error: 'Court not found.' });
+  if (!court.isActive) return res.status(409).json({ error: 'This court is temporarily blocked for maintenance.' });
+  if (startTime < venue.openingTime || startTime >= venue.closingTime) {
+    return res.status(400).json({ error: 'The venue is closed at that time.' });
+  }
+  if (slotStart(bookingDate, startTime) <= new Date()) {
+    return res.status(400).json({ error: 'That slot has already started or passed.' });
   }
 
   // In local mode: use in-memory mutex as layer 1.
@@ -81,23 +96,26 @@ exports.confirmBooking = async (req, res) => {
       return res.status(409).json({ error: 'Slot has already been reserved by another player!' });
     }
 
-    // 3. Create Booking
+    // 3. Create Booking — price is computed here, never trusted from the client
+    const rules = await dbAdapter.getPricingRules(venue.id);
+    const price = calculateSlotPrice(court, bookingDate, startTime, rules).finalPrice;
+    const endHour = parseInt(startTime, 10) + 1;
     const newBooking = {
-      id: `TS-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      venueId: venueId || 'venue-1',
+      id: `TS-${bookingDate.slice(0, 4)}-${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 10)}`,
+      venueId: venue.id,
       courtId,
-      courtName: courtName || 'Sports Court',
-      sport: sport || 'FOOTBALL',
-      venueName: venueName || 'Mumbai Sports Complex',
-      userId: req.user ? req.user.id : (req.body.userId || 'user-1'),
-      userName: req.user ? req.user.fullName : (req.body.userName || 'Alex Morgan'),
-      userEmail: req.user ? req.user.email : (req.body.userEmail || 'player@turfsync.com'),
-      userPhone: req.body.userPhone || '+91 98765 43210',
+      courtName: court.name,
+      sport: court.sport,
+      venueName: venue.name,
+      userId: req.user.id,
+      userName: req.body.userName || req.user.fullName,
+      userEmail: req.user.email,
+      userPhone: req.body.userPhone || null,
       bookingDate,
       startTime,
-      endTime: endTime || '20:00',
-      baseAmount: req.body.baseAmount || 1800,
-      totalAmount: totalAmount || 2340,
+      endTime: `${String(endHour).padStart(2, '0')}:00`,
+      baseAmount: price,
+      totalAmount: Math.round(price * (1 + GST_RATE)),
       status: 'CONFIRMED',
       paymentStatus: 'SUCCEEDED',
       paymentMethod: req.body.paymentMethod || 'Stripe Card (•••• 4242)',
@@ -147,7 +165,16 @@ exports.cancelBooking = async (req, res) => {
     const booking = allBookings.find(b => b.id === id);
     if (!booking) return res.status(404).json({ error: 'Booking not found.' });
 
-    const refund = calculateRefund(booking);
+    const ownsBooking = booking.userEmail === req.user.email;
+    const ownsVenue = isOwner(req.user) && req.user.venueId === booking.venueId;
+    if (!ownsBooking && !ownsVenue) return res.status(403).json({ error: 'You can only cancel your own bookings.' });
+    if (booking.status !== 'CONFIRMED') return res.status(409).json({ error: 'This booking is already cancelled.' });
+    if (slotStart(booking.bookingDate, booking.startTime) <= new Date()) {
+      return res.status(400).json({ error: 'Past bookings cannot be cancelled.' });
+    }
+
+    const venue = await dbAdapter.getVenueById(booking.venueId);
+    const refund = calculateRefund(booking, venue?.cancellationPolicyHours || 24);
 
     const updates = {
       status: 'CANCELLED',
@@ -169,7 +196,7 @@ exports.cancelBooking = async (req, res) => {
     );
 
     if (waitlistEntry) {
-      waitlistEntry.status = 'NOTIFIED';
+      await dbAdapter.updateWaitlistStatus(waitlistEntry.id, 'NOTIFIED');
       console.log(`⚡ [Waitlist Auto-Promote] Notified ${waitlistEntry.userName} (${waitlistEntry.userEmail}) for freed slot!`);
     }
 
@@ -192,7 +219,7 @@ exports.cancelBooking = async (req, res) => {
 
 // Player Bookings
 exports.getMyBookings = async (req, res) => {
-  const email = req.query.email || (req.user ? req.user.email : 'player@turfsync.com');
+  const email = req.user.email;
   try {
     const userBookings = await dbAdapter.getBookings({ userEmail: email });
     res.json(userBookings);
@@ -203,13 +230,13 @@ exports.getMyBookings = async (req, res) => {
 
 // Player KPI Stats
 exports.getPlayerStats = async (req, res) => {
-  const email = req.query.email || (req.user ? req.user.email : 'player@turfsync.com');
+  const email = req.user.email;
   try {
     const bookings = await dbAdapter.getBookings({ userEmail: email });
     const waitlists = await dbAdapter.getWaitlist({ userEmail: email });
 
     const activePasses = bookings.filter(b => b.status === 'CONFIRMED').length;
-    const totalMatches = Math.max(bookings.filter(b => b.status !== 'CANCELLED').length, 3);
+    const totalMatches = bookings.filter(b => b.status === 'CONFIRMED' && b.bookingDate < todayIST()).length;
     const activeWaitlists = waitlists.filter(w => w.status === 'WAITING' || w.status === 'NOTIFIED').length;
 
     res.json({

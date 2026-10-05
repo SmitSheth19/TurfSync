@@ -21,6 +21,12 @@ const TurfBookingFlow = {
       return;
     }
 
+    // Bookings belong to an account; come back here after signing in
+    if (!TurfStorage.getCurrentUser()) {
+      window.location.href = 'login.html?next=checkout.html';
+      return;
+    }
+
     this.renderCheckoutSummary();
     this.prefillUserInfo();
     this.setupPaymentForm();
@@ -33,7 +39,7 @@ const TurfBookingFlow = {
       const emailInput = document.getElementById('payer-email');
       const phoneInput = document.getElementById('payer-phone');
       if (nameInput && user.fullName) nameInput.value = user.fullName;
-      if (emailInput && user.email) emailInput.value = user.email;
+      if (emailInput && user.email) { emailInput.value = user.email; emailInput.readOnly = true; }
       if (phoneInput && user.phone) phoneInput.value = user.phone;
     }
   },
@@ -47,6 +53,8 @@ const TurfBookingFlow = {
 
     container.innerHTML = session.slots.map(slot => {
       const slotTotal = session.isRecurring ? slot.price * 4 : slot.price;
+      const lastWeek = new Date(slot.dateStr + 'T00:00:00');
+      lastWeek.setDate(lastWeek.getDate() + 21);
       subtotal += slotTotal;
 
       return `
@@ -60,7 +68,7 @@ const TurfBookingFlow = {
               📅 ${TurfUI.formatDate(slot.dateStr)} at ${TurfUI.formatTime(slot.timeStr)} (1 Hour)
             </div>
             ${slot.badge ? `<span class="badge badge-amber" style="margin-top:0.35rem;">${slot.badge}</span>` : ''}
-            ${session.isRecurring ? `<span class="badge badge-blue" style="margin-top:0.35rem;">4-Week Recurring Plan</span>` : ''}
+            ${session.isRecurring ? `<span class="badge badge-blue" style="margin-top:0.35rem;">Weekly until ${TurfUI.formatDate(TurfUI.formatISODate(lastWeek))} (4 sessions)</span>` : ''}
           </div>
           <div style="text-align:right;">
             <div style="font-weight:800;font-size:1.1rem;color:var(--secondary);">₹${slotTotal.toLocaleString('en-IN')}</div>
@@ -98,9 +106,10 @@ const TurfBookingFlow = {
       `;
     }
 
-    const name = document.getElementById('payer-name').value.trim() || 'Alex Morgan';
-    const email = document.getElementById('payer-email').value.trim() || 'alex.player@example.com';
-    const phone = document.getElementById('payer-phone').value.trim() || '+91 98765 43210';
+    const user = TurfStorage.getCurrentUser();
+    const name = document.getElementById('payer-name').value.trim() || user.fullName;
+    const email = user.email;
+    const phone = document.getElementById('payer-phone').value.trim() || user.phone || '';
 
     // Simulate 1.2s Stripe network latency
     setTimeout(async () => {
@@ -108,21 +117,33 @@ const TurfBookingFlow = {
       const session = this.checkoutSession;
       let conflictError = null;
 
+      // A recurring plan books the same slot for 4 consecutive weeks
+      const occurrences = [];
       for (const slot of session.slots) {
+        for (let week = 0; week < (session.isRecurring ? 4 : 1); week++) {
+          const d = new Date(slot.dateStr + 'T00:00:00');
+          d.setDate(d.getDate() + week * 7);
+          occurrences.push({ ...slot, dateStr: TurfUI.formatISODate(d) });
+        }
+      }
+
+      for (const slot of occurrences) {
+        // The server sets the final price (incl. GST) from the court's pricing rules
         const payload = {
           venueId: slot.venueId,
           courtId: slot.courtId,
           courtName: slot.courtName,
           sport: slot.sport,
           venueName: slot.venueName,
-          userId: (TurfStorage.getCurrentUser()?.id) || 'user-1',
+          userId: user.id,
           userName: name,
           userEmail: email,
           userPhone: phone,
           date: slot.dateStr,
           startTime: slot.timeStr,
           endTime: `${(parseInt(slot.timeStr.split(':')[0]) + 1).toString().padStart(2, '0')}:00`,
-          totalAmount: session.isRecurring ? slot.price * 4 : slot.price,
+          baseAmount: slot.price,
+          totalAmount: Math.round(slot.price * 1.18),
           isRecurring: session.isRecurring,
           paymentMethod: 'Stripe Card (•••• 4242)'
         };
@@ -130,7 +151,7 @@ const TurfBookingFlow = {
         if (window.TurfAPI) {
           const apiRes = await TurfAPI.confirmBooking(payload);
           if (!apiRes.success) {
-            conflictError = apiRes.error || 'Slot is no longer available.';
+            conflictError = `${TurfUI.formatDate(slot.dateStr)} ${TurfUI.formatTime(slot.timeStr)}: ${apiRes.error || 'Slot is no longer available.'}`;
             break;
           }
           createdBookings.push(apiRes.booking);
@@ -140,7 +161,10 @@ const TurfBookingFlow = {
         }
       }
 
-      if (conflictError) {
+      if (conflictError && createdBookings.length > 0) {
+        // Some sessions were booked before the conflict; confirm those and say which failed
+        TurfUI.showToast(`⚠️ Booked ${createdBookings.length} of ${occurrences.length}. ${conflictError}`, 'warning');
+      } else if (conflictError) {
         if (payBtn) {
           payBtn.disabled = false;
           payBtn.innerHTML = 'Pay & Confirm Reservation &rarr;';

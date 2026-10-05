@@ -64,13 +64,14 @@ const TurfAdmin = {
     const venue = TurfStorage.getVenueById(this.currentVenueId);
     if (!venue) return;
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = TurfUI.getTodayISODate();
     const todayBookings = bookings.filter(b => b.date === todayStr);
 
     const totalRevenue = bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
     const todayRevenue = todayBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
 
-    const totalCourtHours = venue.courts.length * 17; // 6am to 11pm is 17 hours
+    const openHours = parseInt(venue.closingTime, 10) - parseInt(venue.openingTime, 10);
+    const totalCourtHours = venue.courts.filter(c => c.isActive !== false).length * openHours;
     const utilizationRate = totalCourtHours > 0 ? Math.round((todayBookings.length / totalCourtHours) * 100) : 0;
 
     const kpiRev = document.getElementById('kpi-revenue');
@@ -94,7 +95,7 @@ const TurfAdmin = {
     if (!venue) return;
 
     const bookings = TurfStorage.getBookings().filter(b => b.venueId === this.currentVenueId);
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = TurfUI.getTodayISODate();
 
     let rowsHtml = '';
 
@@ -162,7 +163,7 @@ const TurfAdmin = {
       <div class="pricing-rule-item">
         <div class="rule-meta">
           <div class="rule-name">${rule.name}</div>
-          <div class="rule-timing">⏰ ${rule.startTime} - ${rule.endTime} &bull; Surge: ${Math.round((rule.multiplier - 1) * 100)}%</div>
+          <div class="rule-timing">📅 ${TurfUI.formatRuleDays(rule.days)} &bull; ⏰ ${rule.startTime} - ${rule.endTime} &bull; ${rule.multiplier < 1 ? `Discount: ${Math.round((1 - rule.multiplier) * 100)}%` : `Surge: +${Math.round((rule.multiplier - 1) * 100)}%`}</div>
         </div>
         <div style="display:flex;align-items:center;gap:0.75rem;">
           <span class="rule-multiplier-badge">${rule.multiplier}x Rate</span>
@@ -173,6 +174,7 @@ const TurfAdmin = {
   },
 
   deletePricingRule(ruleId) {
+    if (!confirm('Delete this pricing rule?')) return;
     TurfAPI.deletePricingRule(ruleId);
     this.renderPricingRules();
     TurfUI.showToast('Dynamic pricing rule deleted.', 'info');
@@ -236,8 +238,9 @@ const TurfAdmin = {
       <option value="${c.id}" ${c.id === courtId ? 'selected' : ''}>${c.name} (${c.sport})</option>
     `).join('');
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = TurfUI.getTodayISODate();
     document.getElementById('off-date').value = todayStr;
+    document.getElementById('off-date').min = todayStr;
 
     TurfUI.openModal('offline-booking-modal');
   }

@@ -136,6 +136,15 @@
         </div>
 
         <div class="form-group">
+          <label class="form-label">Applies On</label>
+          <select id="rule-days-input" class="form-control">
+            <option value="1,2,3,4,5,6,7">Every day</option>
+            <option value="1,2,3,4,5">Weekdays (Mon–Fri)</option>
+            <option value="6,7">Weekends (Sat–Sun)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Rate Multiplier</label>
           <select id="rule-multiplier-input" class="form-control" required>
             <option value="0.80">0.80x (20% Discount - Off Peak)</option>
@@ -214,10 +223,16 @@
           const endTime = document.getElementById('rule-end-input').value;
           const multiplier = parseFloat(document.getElementById('rule-multiplier-input').value);
           const badgeText = document.getElementById('rule-badge-input').value.trim();
+          const days = document.getElementById('rule-days-input').value;
+          if (endTime <= startTime) {
+            TurfUI.showToast('End time must be after start time.', 'error');
+            return;
+          }
 
           TurfAPI.addPricingRule({
             venueId: currentVenueId,
             name,
+            days,
             startTime,
             endTime,
             multiplier,
@@ -247,7 +262,7 @@
         <div class="pricing-rule-item">
           <div class="rule-meta">
             <div class="rule-name">${rule.name}</div>
-            <div class="rule-timing">⏰ ${rule.startTime} - ${rule.endTime} &bull; Surge Badge: <strong>"${rule.badgeText || ''}"</strong></div>
+            <div class="rule-timing">📅 ${TurfUI.formatRuleDays(rule.days)} &bull; ⏰ ${rule.startTime} - ${rule.endTime} &bull; Surge Badge: <strong>"${rule.badgeText || ''}"</strong></div>
           </div>
           <div style="display:flex;align-items:center;gap:0.75rem;">
             <span class="rule-multiplier-badge">${rule.multiplier}x Rate</span>
@@ -258,6 +273,7 @@
     }
 
     function deleteRule(ruleId) {
+      if (!confirm('Delete this pricing rule?')) return;
       TurfAPI.deletePricingRule(ruleId);
       renderRules();
       TurfUI.showToast('Pricing rule removed.', 'info');
