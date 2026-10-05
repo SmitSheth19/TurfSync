@@ -622,6 +622,7 @@ button, input, select, textarea {
   }
   .mobile-menu-btn { display: block; }
   .nav-user-text { display: none !important; }
+  .checkout-secure-note { display: none !important; }
   .grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
   .stats-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr; }

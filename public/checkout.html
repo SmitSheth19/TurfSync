@@ -29,8 +29,8 @@
         <div>Turf<span>Sync</span></div>
       </a>
 
-      <div style="font-size:0.85rem;color:#cbd5e1;display:flex;align-items:center;gap:0.5rem;">
-        <span>🔒 256-Bit SSL Encrypted Checkout</span>
+      <div class="checkout-secure-note" style="font-size:0.85rem;color:#cbd5e1;display:flex;align-items:center;gap:0.5rem;">
+        <span>🔒 Secure Checkout</span>
       </div>
     </div>
   </nav>
@@ -47,7 +47,6 @@
           <div class="card" style="margin-bottom:1.5rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
               <h2 style="font-size:1.25rem;font-weight:800;color:var(--secondary);">Booking Review</h2>
-              <span class="badge badge-green">Slot Locked (5 Mins)</span>
             </div>
 
             <div id="checkout-items-list">
@@ -73,11 +72,9 @@
 
           <!-- Tiered Cancellation Disclosure Box -->
           <div class="card" style="background:#f8fafc;border-left:4px solid var(--primary);">
-            <h4 style="font-size:0.95rem;font-weight:700;color:var(--secondary);margin-bottom:0.5rem;">🛡️ Automated Refund Guarantee</h4>
-            <ul style="font-size:0.85rem;color:var(--text-muted);list-style:none;display:flex;flex-direction:column;gap:0.35rem;">
-              <li>&bull; <strong>100% Refund</strong> if cancelled >24 hours prior to match time.</li>
-              <li>&bull; <strong>50% Refund</strong> if cancelled 12–24 hours prior.</li>
-              <li>&bull; Instant return to original Stripe payment source.</li>
+            <h4 style="font-size:0.95rem;font-weight:700;color:var(--secondary);margin-bottom:0.5rem;">🛡️ Cancellation &amp; Refunds</h4>
+            <ul id="refund-policy-list" style="font-size:0.85rem;color:var(--text-muted);list-style:none;display:flex;flex-direction:column;gap:0.35rem;">
+              <!-- Filled from the venue's policy by TurfBookingFlow -->
             </ul>
           </div>
         </div>

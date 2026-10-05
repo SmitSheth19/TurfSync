@@ -102,7 +102,7 @@
           <div class="stat-content">
             <span class="stat-label">Active Waitlists</span>
             <div class="stat-value" id="kpi-active-waitlists">0</div>
-            <div class="stat-subtext">Auto-alert on releases</div>
+            <div class="stat-subtext">Flagged here if a slot frees up</div>
           </div>
           <div class="stat-icon-wrapper stat-icon-amber">⏳</div>
         </div>
@@ -355,7 +355,7 @@
                   ${court ? court.name : 'Sports Court'} &bull; ${w.date ? TurfUI.formatDate(w.date) : 'Upcoming'} @ ${TurfUI.formatTime(w.startTime)}
                 </div>
                 <div style="font-size:0.825rem;color:var(--text-muted);margin-top:0.15rem;">
-                  ${isNotified ? 'A slot was released! Confirm your reservation before the 15-minute priority window expires.' : 'We will notify you via instant SMS/Email as soon as a player cancels this slot.'}
+                  ${isNotified ? 'This slot is free again. Book it now before someone else does.' : 'If the player who booked this slot cancels, it will be flagged here.'}
                 </div>
               </div>
             </div>
@@ -487,9 +487,6 @@
                 </button>
                 <button class="btn btn-outline btn-sm btn-block" onclick="addToCalendar('${b.id}')" style="font-size:0.825rem;">
                   📅 Add to Calendar
-                </button>
-                <button class="btn btn-outline-primary btn-sm btn-block" onclick="openReviewModal('${b.venueId}', '${b.id}')" style="font-size:0.825rem;">
-                  ⭐ Rate Venue
                 </button>
                 <button class="btn btn-outline btn-sm btn-block" style="color:var(--accent-red);border-color:rgba(239,68,68,0.35);font-size:0.825rem;margin-top:0.25rem;" onclick="openCancelModal('${b.id}')">
                   Cancel Reservation
@@ -685,20 +682,17 @@
       TurfUI.openModal('review-modal');
     }
 
-    function submitReview() {
+    async function submitReview() {
       const venueId = document.getElementById('review-venue-id').value;
       const comment = document.getElementById('review-comment').value.trim();
-      const currentUser = TurfStorage.getCurrentUser();
-
-      TurfAPI.addReview({
-        venueId,
-        userName: currentUser ? currentUser.fullName : 'Verified Player',
-        rating: selectedRating,
-        comment: comment || 'Great turf facility and seamless automated booking!'
-      });
-
+      const res = await TurfAPI.addReview(venueId, selectedRating, comment);
+      if (!res.success) {
+        TurfUI.showToast(res.error, 'error');
+        return;
+      }
       TurfUI.closeModal('review-modal');
-      TurfUI.showToast('✓ Thank you! Your review has been published.', 'success');
+      document.getElementById('review-comment').value = '';
+      TurfUI.showToast('✓ Thank you! Your review is now on the venue page.', 'success');
     }
 
     // Star rating interactions

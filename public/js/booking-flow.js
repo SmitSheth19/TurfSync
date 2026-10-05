@@ -78,6 +78,17 @@ const TurfBookingFlow = {
       `;
     }).join('');
 
+    // Refund tiers come from the venue's own cancellation policy
+    const policyHours = TurfStorage.getVenueById(session.slots[0].venueId)?.cancellationPolicyHours || 24;
+    const policyList = document.getElementById('refund-policy-list');
+    if (policyList) {
+      policyList.innerHTML = `
+        <li>&bull; <strong>100% refund</strong> if cancelled at least ${policyHours} hours before the match.</li>
+        <li>&bull; <strong>50% refund</strong> if cancelled ${policyHours / 2}–${policyHours} hours before.</li>
+        <li>&bull; No refund within ${policyHours / 2} hours of the match.</li>
+        <li>&bull; Cancel anytime from My Bookings.</li>`;
+    }
+
     const taxAmount = Math.round(subtotal * 0.18); // 18% GST standard
     const finalTotal = subtotal + taxAmount;
 

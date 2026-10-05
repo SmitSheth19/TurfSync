@@ -140,6 +140,14 @@ const dbAdapter = {
     return this.getVenueById(id);
   },
 
+  async updateVenueStats(id, rating, reviewCount) {
+    if (this.isSupabase()) {
+      await supabase.from('venues').update({ rating, review_count: reviewCount }).eq('id', id);
+    }
+    const local = DB.venues.find(v => v.id === id);
+    if (local) Object.assign(local, { rating, reviewCount });
+  },
+
   async updateCourt(id, fields) {
     const columns = { name: 'name', sport: 'sport', surface: 'surface', isIndoor: 'is_indoor', baseRate: 'base_rate' };
     if (this.isSupabase()) {
@@ -498,7 +506,7 @@ const dbAdapter = {
 
   async createReview(review) {
     if (this.isSupabase()) {
-      await supabase.from('reviews').insert([{
+      const { error } = await supabase.from('reviews').insert([{
         id: review.id,
         venue_id: review.venueId,
         user_name: review.userName,
@@ -506,6 +514,7 @@ const dbAdapter = {
         comment: review.comment,
         date: review.date
       }]);
+      if (error) throw new Error(error.message);
     }
     DB.reviews.unshift(review);
     return review;

@@ -128,14 +128,12 @@ const TurfAPI = {
     this._send('DELETE', `/pricing/${id}`);
   },
 
-  addReview(review) {
-    const local = TurfStorage.addReview(review);
-    this._send('POST', `/venues/${local.venueId}/reviews`, local);
-    return local;
+  addReview(venueId, rating, comment) {
+    return this._writeAndSync('POST', `/venues/${venueId}/reviews`, { rating, comment });
   },
 
-  // Owner venue/court edits: wait for the server, then re-sync the local cache
-  async _ownerWrite(method, path, body) {
+  // Writes whose result the user must see: wait for the server, then re-sync the local cache
+  async _writeAndSync(method, path, body) {
     try {
       const res = await fetch(`${this.BASE_URL}${path}`, {
         method,
@@ -152,10 +150,10 @@ const TurfAPI = {
     }
   },
 
-  updateVenue(fields) { return this._ownerWrite('PUT', '/admin/venue', fields); },
-  addCourt(fields) { return this._ownerWrite('POST', '/admin/courts', fields); },
-  updateCourt(id, fields) { return this._ownerWrite('PUT', `/admin/courts/${id}`, fields); },
-  deleteCourt(id) { return this._ownerWrite('DELETE', `/admin/courts/${id}`); },
+  updateVenue(fields) { return this._writeAndSync('PUT', '/admin/venue', fields); },
+  addCourt(fields) { return this._writeAndSync('POST', '/admin/courts', fields); },
+  updateCourt(id, fields) { return this._writeAndSync('PUT', `/admin/courts/${id}`, fields); },
+  deleteCourt(id) { return this._writeAndSync('DELETE', `/admin/courts/${id}`); },
 
   toggleCourt(courtId) {
     this._send('PATCH', `/admin/courts/${courtId}/toggle`);

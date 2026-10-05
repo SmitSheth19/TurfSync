@@ -34,6 +34,7 @@ const TurfCalendar = {
     }
 
     this.renderCourtTabs();
+    this.renderVenueAbout();
     this.renderWeek();
     this.setupEventListeners();
 
@@ -127,6 +128,49 @@ const TurfCalendar = {
         this.renderWeek();
       });
     });
+  },
+
+  // Photo, address, description and reviews below the calendar
+  renderVenueAbout() {
+    const el = document.getElementById('venue-about');
+    const venue = TurfStorage.getVenueById(this.currentVenueId);
+    if (!el || !venue) return;
+    const esc = TurfUI.escapeHtml;
+    const reviews = TurfStorage.getVenueReviews(venue.id).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name}, ${venue.address}, ${venue.city || 'Mumbai'}`)}`;
+    const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+    el.innerHTML = `
+      <div class="card" style="padding:0;overflow:hidden;">
+        <img src="${esc(venue.image)}" alt="${esc(venue.name)}" style="width:100%;height:220px;object-fit:cover;display:block;"
+          onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&w=800&q=80'">
+        <div style="padding:1.5rem;">
+          <h2 style="font-size:1.25rem;font-weight:800;color:var(--secondary);margin-bottom:0.5rem;">About ${esc(venue.name)}</h2>
+          <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.75rem;">
+            📍 ${esc(venue.address)}${venue.area ? `, ${esc(venue.area)}` : ''} &bull;
+            <a href="${mapsUrl}" target="_blank" rel="noopener" style="color:var(--primary-dark);font-weight:600;">Open in Maps</a>
+          </p>
+          ${venue.description ? `<p style="font-size:0.925rem;line-height:1.6;color:var(--secondary-muted);">${esc(venue.description)}</p>` : ''}
+        </div>
+      </div>
+      <div class="card">
+        <h2 style="font-size:1.25rem;font-weight:800;color:var(--secondary);margin-bottom:0.25rem;">Player Reviews</h2>
+        <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:1rem;">
+          ${venue.reviewCount ? `⭐ ${venue.rating} from ${venue.reviewCount} review${venue.reviewCount === 1 ? '' : 's'}` : 'No reviews yet.'}
+        </p>
+        <div style="display:flex;flex-direction:column;gap:0.85rem;max-height:340px;overflow-y:auto;">
+          ${reviews.map(r => `
+            <div style="border-bottom:1px solid var(--border);padding-bottom:0.75rem;">
+              <div style="display:flex;justify-content:space-between;gap:0.5rem;font-size:0.875rem;">
+                <strong>${esc(r.userName)}</strong>
+                <span style="color:var(--accent-amber);letter-spacing:0.05em;">${stars(Math.max(1, Math.min(5, r.rating)))}</span>
+              </div>
+              ${r.comment ? `<p style="font-size:0.875rem;color:var(--secondary-muted);margin-top:0.3rem;">${esc(r.comment)}</p>` : ''}
+              <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">${r.date ? TurfUI.formatDate(r.date) : ''}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    `;
   },
 
   getDaysOfWeek() {
@@ -371,7 +415,7 @@ const TurfCalendar = {
     });
 
     TurfUI.closeModal('waitlist-modal');
-    TurfUI.showToast('✓ Successfully joined waitlist! We will alert you immediately if this slot opens up.', 'success');
+    TurfUI.showToast("✓ You're on the waitlist. If this slot frees up, it will show in My Bookings.", 'success');
   },
 
   proceedToCheckout() {

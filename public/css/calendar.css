@@ -293,11 +293,13 @@
   justify-content: space-between;
   box-shadow: var(--shadow-xl);
   transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  visibility: hidden;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s;
 }
 
 .booking-dock.active {
   transform: translateY(0);
+  visibility: visible;
 }
 
 .dock-summary {
@@ -343,6 +345,13 @@
 @media (max-width: 768px) {
   .calendar-header { flex-direction: column; align-items: flex-start; }
   .calendar-legend { flex-wrap: wrap; }
-  .booking-dock { flex-direction: column; gap: 1rem; align-items: stretch; }
-  .dock-summary { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+  /* Compact two-row bar: summary on top, full-width pay button below */
+  .booking-dock { padding: 0.75rem 1rem; }
+  .booking-dock > .container { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+  .booking-dock > .container > div:last-child { width: 100%; }
+  #dock-checkout-btn { width: 100%; font-size: 1rem; padding: 0.75rem; }
+  .dock-summary { flex-wrap: wrap; gap: 0.4rem 1rem; }
+  .dock-stat-label { display: none; }
+  .dock-stat-value { font-size: 1.05rem; }
+  .dock-recurring-toggle { font-size: 0.75rem; padding: 0.3rem 0.6rem; }
 }

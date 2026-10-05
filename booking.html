@@ -87,7 +87,7 @@
           <div class="calendar-legend">
             <div class="legend-item">
               <span class="legend-dot available"></span>
-              <span>Available (Live Dynamic Rate)</span>
+              <span>Available (price before 18% GST)</span>
             </div>
             <div class="legend-item">
               <span class="legend-dot hold"></span>
@@ -109,6 +109,9 @@
 
       </div>
 
+      <!-- About the venue: details and player reviews -->
+      <section id="venue-about" class="grid grid-cols-2 gap-6" style="margin-top:2rem;"></section>
+
     </div>
   </main>
 
@@ -118,12 +121,12 @@
       <div class="dock-summary">
         <div>
           <div class="dock-stat-label">RESERVATION SUMMARY</div>
-          <div id="dock-slots-count" class="dock-stat-value">1 Slot Selected</div>
+          <div id="dock-slots-count" class="dock-stat-value"></div>
         </div>
 
         <div>
-          <div class="dock-stat-label">TOTAL ESTIMATE</div>
-          <div id="dock-total-amount" class="dock-stat-value"><span>₹1,950</span></div>
+          <div class="dock-stat-label">TOTAL (BEFORE GST)</div>
+          <div id="dock-total-amount" class="dock-stat-value"></div>
         </div>
 
         <!-- Recurring Weekly Repeat Option -->
@@ -135,7 +138,7 @@
 
       <div style="display:flex;gap:1rem;align-items:center;">
         <button id="dock-checkout-btn" class="btn btn-primary btn-lg">
-          Lock Slot & Proceed to Pay &rarr;
+          Proceed to Pay &rarr;
         </button>
       </div>
     </div>
@@ -172,7 +175,7 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Mobile Number (SMS Alert)</label>
+        <label class="form-label">Mobile Number</label>
         <input type="tel" id="wl-user-phone" class="form-control" placeholder="+91 98765 43210">
       </div>
     </div>
