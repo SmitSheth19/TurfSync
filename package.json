@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "description": "Mumbai Sports Turf Booking Platform",
   "scripts": {
-    "start": "node server/server.js",
-    "dev": "node --watch server/server.js",
     "test": "node server/test/api.test.js",
-    "seed": "node server/scripts/seed-supabase.js"
+    "seed": "node server/scripts/seed-supabase.js",
+    "build": "echo 'static site, no build needed'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
