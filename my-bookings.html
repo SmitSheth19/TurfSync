@@ -50,7 +50,7 @@
           <span>⚽</span> Mumbai Metro Verified Player Portal
         </div>
         <h1 style="font-size:2.15rem;font-weight:800;letter-spacing:-0.02em;line-height:1.2;" id="dashboard-welcome-heading">
-          Welcome Back, Alex!
+          Welcome Back!
         </h1>
         <p style="color:#94a3b8;font-size:0.95rem;margin-top:0.35rem;max-width:600px;">
           Manage your upcoming match passes, digital check-in QR codes, automated Stripe refunds, and real-time waitlists across Mumbai arenas.
@@ -60,11 +60,10 @@
       <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
         <div id="player-profile-header" style="display:flex;align-items:center;gap:0.85rem;background:rgba(255,255,255,0.06);padding:0.6rem 1rem;border-radius:var(--radius-lg);border:1px solid rgba(255,255,255,0.12);">
           <div id="user-avatar-initials" style="width:2.6rem;height:2.6rem;background:var(--primary);color:var(--secondary);border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.95rem;">
-            AM
           </div>
           <div>
-            <div id="user-display-name" style="font-weight:700;color:#fff;font-size:0.95rem;">Alex Morgan</div>
-            <div id="user-display-email" style="font-size:0.8rem;color:#94a3b8;">player@turfsync.com</div>
+            <div id="user-display-name" style="font-weight:700;color:#fff;font-size:0.95rem;"></div>
+            <div id="user-display-email" style="font-size:0.8rem;color:#94a3b8;"></div>
           </div>
         </div>
 
@@ -292,7 +291,7 @@
       
       // Update header profile display
       if (user) {
-        const initials = user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'AM';
+        const initials = user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '';
         const avatarEl = document.getElementById('user-avatar-initials');
         const nameEl = document.getElementById('user-display-name');
         const emailEl = document.getElementById('user-display-email');
@@ -537,7 +536,7 @@
       const booking = TurfStorage.getBookingById(bookingId);
       if (!booking) return;
 
-      const user = TurfStorage.getCurrentUser() || { fullName: 'Alex Morgan', phone: '+91 98765 43210' };
+      const user = TurfStorage.getCurrentUser() || {};
       const content = document.getElementById('gate-pass-ticket-content');
 
       // Generate a dynamic mock QR code pattern via SVG
