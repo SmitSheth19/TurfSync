@@ -32,7 +32,6 @@
       <ul class="nav-links">
         <li><a href="index.html" class="nav-link">Home</a></li>
         <li><a href="venues.html" class="nav-link">Explore Venues</a></li>
-        <li><a href="booking.html?venue=venue-1" class="nav-link">Book Turf</a></li>
         <li><a href="my-bookings.html" class="nav-link active">My Bookings</a></li>
       </ul>
 
@@ -361,7 +360,7 @@
 
             <div style="display:flex;gap:0.6rem;align-items:center;">
               ${isNotified ? `
-                <a href="booking.html?venue=${court?.venueId || 'venue-1'}" class="btn btn-primary btn-sm" style="font-weight:700;">
+                <a href="${court?.venueId ? 'booking.html?venue=' + court.venueId : 'venues.html'}" class="btn btn-primary btn-sm" style="font-weight:700;">
                   Claim Slot Now &rarr;
                 </a>
               ` : ''}

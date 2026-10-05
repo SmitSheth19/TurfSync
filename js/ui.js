@@ -135,7 +135,6 @@ const TurfUI = {
         navLinks.innerHTML = `
           <li><a href="index.html" class="nav-link">Home</a></li>
           <li><a href="venues.html" class="nav-link">Explore Venues</a></li>
-          <li><a href="booking.html?venue=venue-1" class="nav-link">Book Turf</a></li>
         `;
       } else if (TurfStorage.isOwner(user)) {
         // Facility Owner: Administrative controls and facility management
@@ -150,7 +149,6 @@ const TurfUI = {
         navLinks.innerHTML = `
           <li><a href="index.html" class="nav-link">Home</a></li>
           <li><a href="venues.html" class="nav-link">Explore Venues</a></li>
-          <li><a href="booking.html?venue=venue-1" class="nav-link">Book Turf</a></li>
           <li><a href="my-bookings.html" class="nav-link">My Bookings</a></li>
         `;
       }
