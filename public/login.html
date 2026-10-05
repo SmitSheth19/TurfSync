@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TurfSync | Sign In</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase Realtime config (anon/public key) -->
+  <script>
+    window.TURFSYNC_CONFIG = {
+      supabaseUrl: "https://axnfaxcwjovhdrdepcov.supabase.co",
+      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4bmZheGN3am92aGRyZGVwY292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTQ3NjksImV4cCI6MjEwNjc5MDc2OX0.f8-9PY5yCDRWy8kyDiTPhIoSlXgy4hT8fq5AGD0yt6Q"
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase-client.js"></script>
+</head>
+<body class="auth-page">
+
+  <div class="auth-split-wrapper">
+    
+    <!-- Left Brand & Features Sidebar -->
+    <aside class="auth-brand-sidebar">
+      <div>
+        <a href="index.html" class="logo" style="margin-bottom:2.5rem;display:inline-flex;">
+          <div class="logo-icon">⚡</div>
+          <div>Turf<span>Sync</span></div>
+        </a>
+
+        <div style="max-width:440px;">
+          <h2 style="font-size:2.25rem;font-weight:800;line-height:1.2;letter-spacing:-0.03em;margin-bottom:1rem;">
+            The Modern Standard for Sports Turf Booking
+          </h2>
+          <p style="color:#94a3b8;font-size:1.05rem;line-height:1.6;">
+            Instant real-time court availability, zero double-bookings, automated Stripe payments, and fair cancellation refunds.
+          </p>
+
+          <ul class="feature-check-list">
+            <li class="feature-check-item">
+              <span class="feature-check-icon">&#10003;</span>
+              <span>24/7 interactive weekly calendar with live rates</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="feature-check-icon">&#10003;</span>
+              <span>Atomic concurrency locking on checkout</span>
+            </li>
+            <li class="feature-check-item">
+              <span class="feature-check-icon">&#10003;</span>
+              <span>Direct facility management with 0% aggregator fees</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Social Proof Quote Box -->
+      <div class="brand-quote-box">
+        <p style="font-size:0.95rem;line-height:1.6;color:#e2e8f0;font-style:italic;">
+          &ldquo;TurfSync completely transformed how we operate our 3 arenas in Mumbai. Offline cash booking entries and dynamic weekend surges work flawlessly.&rdquo;
+        </p>
+        <div style="margin-top:1rem;display:flex;align-items:center;gap:0.75rem;">
+          <div style="width:36px;height:36px;background:var(--primary);color:var(--secondary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;">
+            AA
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:0.9rem;">Apex Arena Management</div>
+            <div style="font-size:0.75rem;color:#94a3b8;">BKC & Indiranagar Complexes</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:0.8rem;color:#64748b;">
+        &copy; 2026 TurfSync Platform. All rights reserved.
+      </div>
+    </aside>
+
+    <!-- Right Sign-In Form Area -->
+    <main class="auth-form-panel">
+      <div class="auth-card">
+        
+        <div class="auth-header">
+          <h1>Sign In</h1>
+          <p>Access your reservations, profile, or facility portal</p>
+        </div>
+
+        <!-- 1-Click Demo Accounts Box -->
+        <div class="demo-accounts-pill-box">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">
+            1-Click Demo Accounts
+          </div>
+          <div class="demo-pills" style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
+            <button type="button" class="demo-pill-btn" onclick="fillDemo('player')">
+              <span>Player Account</span>
+              <small style="color:var(--text-muted);">(Alex Morgan)</small>
+            </button>
+            <button type="button" class="demo-pill-btn" onclick="fillDemo('admin1')">
+              <span>Apex Arena (BKC)</span>
+              <small style="color:var(--text-muted);">(Owner 1)</small>
+            </button>
+            <button type="button" class="demo-pill-btn" onclick="fillDemo('admin2')">
+              <span>Metro Kick (Andheri)</span>
+              <small style="color:var(--text-muted);">(Owner 2)</small>
+            </button>
+            <button type="button" class="demo-pill-btn" onclick="fillDemo('admin3')">
+              <span>Smash Point (Juhu)</span>
+              <small style="color:var(--text-muted);">(Owner 3)</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="login-error-alert" style="display:none;background:var(--accent-red-light);border:1px solid var(--accent-red);color:#991b1b;padding:0.75rem 1rem;border-radius:var(--radius-md);font-size:0.85rem;margin-bottom:1.25rem;">
+        </div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email Address</label>
+            <input type="email" id="login-email" class="form-control" placeholder="name@example.com" required autocomplete="email" autofocus>
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label class="form-label" for="login-password">Password</label>
+              <a href="#" onclick="alert('Password reset instructions have been simulated to your email.');return false;" style="font-size:0.8rem;color:var(--primary-dark);font-weight:600;">Forgot Password?</a>
+            </div>
+            
+            <div class="password-wrapper">
+              <input type="password" id="login-password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+              <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password', this)">Show</button>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:0.5rem;margin:1rem 0 1.5rem;">
+            <input type="checkbox" id="remember-me" checked style="accent-color:var(--primary);width:1rem;height:1rem;cursor:pointer;">
+            <label for="remember-me" style="font-size:0.85rem;color:var(--text-muted);cursor:pointer;">Keep me signed in</label>
+          </div>
+
+          <button type="submit" id="login-submit-btn" class="btn btn-primary btn-block btn-lg">
+            Sign In &rarr;
+          </button>
+        </form>
+
+        <div style="text-align:center;margin-top:1.75rem;padding-top:1.25rem;border-top:1px solid var(--border);font-size:0.875rem;color:var(--text-muted);">
+          Don't have an account yet? <a href="register.html" style="color:var(--primary-dark);font-weight:700;">Create an account &rarr;</a>
+        </div>
+
+        <div style="text-align:center;margin-top:1rem;">
+          <a href="index.html" style="font-size:0.825rem;color:var(--text-muted);">&larr; Back to Public Directory</a>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    function togglePasswordVisibility(fieldId, btn) {
+      const field = document.getElementById(fieldId);
+      if (field.type === 'password') {
+        field.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        field.type = 'password';
+        btn.textContent = 'Show';
+      }
+    }
+
+    function fillDemo(type) {
+      if (type === 'player') {
+        document.getElementById('login-email').value = 'player@turfsync.com';
+        document.getElementById('login-password').value = 'password123';
+      } else if (type === 'admin1' || type === 'admin') {
+        document.getElementById('login-email').value = 'admin@apexarena.com';
+        document.getElementById('login-password').value = 'admin123';
+      } else if (type === 'admin2') {
+        document.getElementById('login-email').value = 'owner@metrokick.com';
+        document.getElementById('login-password').value = 'admin123';
+      } else if (type === 'admin3') {
+        document.getElementById('login-email').value = 'owner@smashpoint.com';
+        document.getElementById('login-password').value = 'admin123';
+      }
+      document.getElementById('login-error-alert').style.display = 'none';
+    }
+
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errorBox = document.getElementById('login-error-alert');
+      const submitBtn = document.getElementById('login-submit-btn');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Verifying...';
+
+      setTimeout(async () => {
+        let result;
+        if (window.TurfAPI) {
+          result = await TurfAPI.login(email, password);
+        } else {
+          result = TurfStorage.login(email, password);
+        }
+
+        if (result && result.success) {
+          TurfUI.showToast(`Welcome back, ${result.user.fullName}!`, 'success');
+          setTimeout(() => {
+            if (result.user.role === 'VENUE_ADMIN') {
+              window.location.href = 'admin-dashboard.html';
+            } else {
+              window.location.href = 'my-bookings.html';
+            }
+          }, 400);
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Sign In &rarr;';
+          errorBox.textContent = result?.error || 'Invalid credentials.';
+          errorBox.style.display = 'block';
+        }
+      }, 350);
+    });
+  </script>
+</body>
+</html>

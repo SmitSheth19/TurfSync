@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TurfSync | Player Dashboard & Match Passes</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase Realtime config (anon/public key) -->
+  <script>
+    window.TURFSYNC_CONFIG = {
+      supabaseUrl: "https://axnfaxcwjovhdrdepcov.supabase.co",
+      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4bmZheGN3am92aGRyZGVwY292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTQ3NjksImV4cCI6MjEwNjc5MDc2OX0.f8-9PY5yCDRWy8kyDiTPhIoSlXgy4hT8fq5AGD0yt6Q"
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase-client.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">⚡</div>
+        <div>Turf<span>Sync</span></div>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="venues.html" class="nav-link">Explore Venues</a></li>
+        <li><a href="booking.html?venue=venue-1" class="nav-link">Book Turf</a></li>
+        <li><a href="my-bookings.html" class="nav-link active">My Bookings</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="venues.html" class="btn btn-primary btn-sm">+ New Reservation</a>
+        <button class="mobile-menu-btn" aria-label="Toggle menu">&#9776;</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Player Dashboard Header -->
+  <header style="background:var(--secondary);color:var(--text-inverse);padding:2.75rem 0 2.25rem;">
+    <div class="container flex justify-between items-center" style="flex-wrap:wrap;gap:1.5rem;">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--primary);padding:0.25rem 0.75rem;border-radius:var(--radius-full);font-size:0.8rem;font-weight:700;margin-bottom:0.75rem;">
+          <span>⚽</span> Mumbai Metro Verified Player Portal
+        </div>
+        <h1 style="font-size:2.15rem;font-weight:800;letter-spacing:-0.02em;line-height:1.2;" id="dashboard-welcome-heading">
+          Welcome Back, Alex!
+        </h1>
+        <p style="color:#94a3b8;font-size:0.95rem;margin-top:0.35rem;max-width:600px;">
+          Manage your upcoming match passes, digital check-in QR codes, automated Stripe refunds, and real-time waitlists across Mumbai arenas.
+        </p>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <div id="player-profile-header" style="display:flex;align-items:center;gap:0.85rem;background:rgba(255,255,255,0.06);padding:0.6rem 1rem;border-radius:var(--radius-lg);border:1px solid rgba(255,255,255,0.12);">
+          <div id="user-avatar-initials" style="width:2.6rem;height:2.6rem;background:var(--primary);color:var(--secondary);border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.95rem;">
+            AM
+          </div>
+          <div>
+            <div id="user-display-name" style="font-weight:700;color:#fff;font-size:0.95rem;">Alex Morgan</div>
+            <div id="user-display-email" style="font-size:0.8rem;color:#94a3b8;">player@turfsync.com</div>
+          </div>
+        </div>
+
+        <a href="venues.html" class="btn btn-primary" style="font-weight:700;">
+          + Book Match Slot
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Content -->
+  <main style="padding:2.5rem 0 4rem;background:var(--bg-main);flex-grow:1;">
+    <div class="container" style="max-width:1040px;">
+      
+      <!-- Player KPI Stat Cards -->
+      <section class="stats-grid" id="player-kpi-grid">
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-label">Active Passes</span>
+            <div class="stat-value" id="kpi-active-passes">1</div>
+            <div class="stat-subtext">✓ Ready for check-in</div>
+          </div>
+          <div class="stat-icon-wrapper stat-icon-green">🎟️</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-label">Matches Played</span>
+            <div class="stat-value" id="kpi-total-matches">3</div>
+            <div class="stat-subtext">Mumbai sports arenas</div>
+          </div>
+          <div class="stat-icon-wrapper stat-icon-blue">⚡</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-label">Active Waitlists</span>
+            <div class="stat-value" id="kpi-active-waitlists">0</div>
+            <div class="stat-subtext">Auto-alert on releases</div>
+          </div>
+          <div class="stat-icon-wrapper stat-icon-amber">⏳</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-label">Favorite Sport</span>
+            <div class="stat-value" style="font-size:1.25rem;padding-top:0.25rem;" id="kpi-fav-sport">Football (7v7)</div>
+            <div class="stat-subtext">Most played category</div>
+          </div>
+          <div class="stat-icon-wrapper stat-icon-purple">⚽</div>
+        </div>
+      </section>
+
+      <!-- Dynamic Active Waitlist Alert Section -->
+      <div id="waitlist-alert-container">
+        <!-- Injected if user has active waitlist entries -->
+      </div>
+
+      <!-- Reservations Section Header -->
+      <div class="card" style="padding:1.5rem;margin-bottom:1.75rem;box-shadow:var(--shadow-sm);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+          <!-- Filter Tabs -->
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-primary" id="tab-upcoming" onclick="filterBookings('UPCOMING')">
+              Upcoming Passes (<span id="count-upcoming">1</span>)
+            </button>
+            <button class="btn btn-sm btn-outline" id="tab-past" onclick="filterBookings('PAST')">
+              Past & Cancelled (<span id="count-past">0</span>)
+            </button>
+            <button class="btn btn-sm btn-outline" id="tab-all" onclick="filterBookings('ALL')">
+              All History (<span id="count-all">1</span>)
+            </button>
+          </div>
+
+          <!-- Quick Search Filter Input -->
+          <div style="min-width:240px;flex-grow:1;max-width:320px;">
+            <input 
+              type="text" 
+              id="booking-search-input" 
+              class="form-control" 
+              placeholder="Search by arena, sport, or #ID..." 
+              oninput="handleSearchFilter(this.value)"
+              style="padding:0.45rem 0.85rem;font-size:0.875rem;"
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookings Listing Container -->
+      <div id="bookings-list-container" class="flex flex-col gap-4">
+        <!-- Injected via JavaScript -->
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Digital Gate Pass & QR Code Modal (Native Dialog) -->
+  <dialog id="gate-pass-modal" class="modal">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="font-size:1.25rem;">🎟️</span>
+        <h3 class="modal-title">Digital Match Pass</h3>
+      </div>
+      <button class="modal-close-btn" onclick="TurfUI.closeModal('gate-pass-modal')">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:1.5rem;">
+      <div class="ticket-container" id="gate-pass-ticket-content">
+        <!-- Injected via openGatePassModal -->
+      </div>
+
+      <div style="margin-top:1.25rem;background:var(--bg-subtle);border-radius:var(--radius-md);padding:1rem;font-size:0.825rem;color:var(--text-muted);line-height:1.5;">
+        <strong style="color:var(--secondary);display:block;margin-bottom:0.35rem;">🏟️ Mumbai Arena Entry Instructions:</strong>
+        <ul style="padding-left:1.2rem;margin:0;">
+          <li>Wear appropriate non-marking sports shoes or turf studs.</li>
+          <li>Please arrive at the venue reception 10 minutes prior to slot start time.</li>
+          <li>Present this QR code or booking pass ID to the turf ground coordinator.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="TurfUI.closeModal('gate-pass-modal')">Close Pass</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Print / Save PDF</button>
+    </div>
+  </dialog>
+
+  <!-- Tiered Cancellation & Stripe Refund Modal (Native Dialog) -->
+  <dialog id="cancel-modal" class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Cancel Reservation</h3>
+      <button class="modal-close-btn" onclick="TurfUI.closeModal('cancel-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.9rem;color:var(--text-muted);">
+        Review the automatic refund calculation governed by Mumbai Arena cancellation policies.
+      </p>
+
+      <input type="hidden" id="cancel-booking-id">
+
+      <!-- Dynamic Live Refund Preview Box -->
+      <div class="refund-preview-box" id="refund-preview-content">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="cancel-reason">Reason for Cancellation</label>
+        <select id="cancel-reason" class="form-control">
+          <option value="Schedule Conflict">Schedule Conflict</option>
+          <option value="Weather / Heavy Rain">Weather / Heavy Rain</option>
+          <option value="Player Injury / Team Shortage">Player Injury / Team Shortage</option>
+          <option value="Found Another Slot">Found Another Slot</option>
+          <option value="Other">Other Reason</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="TurfUI.closeModal('cancel-modal')">Keep Booking</button>
+      <button class="btn btn-danger" onclick="confirmCancellation()">Confirm Cancellation & Process Refund</button>
+    </div>
+  </dialog>
+
+  <!-- Review & Rating Modal (Native Dialog) -->
+  <dialog id="review-modal" class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Rate & Review Arena</h3>
+      <button class="modal-close-btn" onclick="TurfUI.closeModal('review-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="review-venue-id">
+      <input type="hidden" id="review-booking-id">
+
+      <h4 id="review-venue-name" style="color:var(--secondary);font-size:1.15rem;margin-bottom:0.5rem;">Apex Arena Sports Complex</h4>
+
+      <div class="form-group">
+        <label class="form-label">Your Rating</label>
+        <div class="star-rating" id="star-rating-container">
+          <span class="star selected" data-value="1">★</span>
+          <span class="star selected" data-value="2">★</span>
+          <span class="star selected" data-value="3">★</span>
+          <span class="star selected" data-value="4">★</span>
+          <span class="star selected" data-value="5">★</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="review-comment">Share your experience (Turf condition, lighting, parking)</label>
+        <textarea id="review-comment" class="form-control" rows="3" placeholder="Lighting was awesome and turf grass was top quality!"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="TurfUI.closeModal('review-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitReview()">Submit Review</button>
+    </div>
+  </dialog>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <div>&copy; 2026 TurfSync Platform &bull; Centralized Mumbai Sports Booking System.</div>
+        <div>Automated Booking & Tiered Refund Engine</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    let currentFilter = 'UPCOMING';
+    let searchQuery = '';
+    let selectedRating = 5;
+
+    function renderDashboard() {
+      const user = TurfStorage.getCurrentUser();
+      if (!user) {
+        alert('Please log in to access your bookings and match passes.');
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      // Update header profile display
+      if (user) {
+        const initials = user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'AM';
+        const avatarEl = document.getElementById('user-avatar-initials');
+        const nameEl = document.getElementById('user-display-name');
+        const emailEl = document.getElementById('user-display-email');
+        const welcomeEl = document.getElementById('dashboard-welcome-heading');
+        
+        if (avatarEl) avatarEl.textContent = initials;
+        if (nameEl) nameEl.textContent = user.fullName;
+        if (emailEl) emailEl.textContent = user.email;
+        if (welcomeEl) welcomeEl.textContent = `Welcome Back, ${user.fullName.split(' ')[0]}!`;
+      }
+
+      // Update KPI Stat Cards
+      const stats = TurfStorage.getPlayerStats(user?.email);
+      const activePassesEl = document.getElementById('kpi-active-passes');
+      const totalMatchesEl = document.getElementById('kpi-total-matches');
+      const activeWaitlistsEl = document.getElementById('kpi-active-waitlists');
+      const favSportEl = document.getElementById('kpi-fav-sport');
+
+      if (activePassesEl) activePassesEl.textContent = stats.activePasses;
+      if (totalMatchesEl) totalMatchesEl.textContent = stats.totalMatches;
+      if (activeWaitlistsEl) activeWaitlistsEl.textContent = stats.activeWaitlists;
+      if (favSportEl) favSportEl.textContent = stats.favoriteSport;
+
+      // Render Active Waitlist Alert Banner
+      renderWaitlistBanner(user);
+
+      // Render Bookings List with Counts
+      renderBookingsList(user);
+    }
+
+    function renderWaitlistBanner(user) {
+      const waitlistContainer = document.getElementById('waitlist-alert-container');
+      if (!waitlistContainer) return;
+
+      const waitlists = TurfStorage.getUserWaitlists(user?.email);
+      const activeWaitlists = waitlists.filter(w => w.status === 'WAITING' || w.status === 'NOTIFIED');
+
+      if (activeWaitlists.length === 0) {
+        waitlistContainer.innerHTML = '';
+        return;
+      }
+
+      waitlistContainer.innerHTML = activeWaitlists.map(w => {
+        const court = TurfStorage.getCourtById(w.courtId);
+        const isNotified = w.status === 'NOTIFIED';
+
+        return `
+          <div class="waitlist-alert-card">
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <div style="width:2.75rem;height:2.75rem;border-radius:var(--radius-full);background:${isNotified ? 'var(--primary)' : 'var(--accent-amber)'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:bold;">
+                ${isNotified ? '⚡' : '⏳'}
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.2rem;">
+                  <span class="badge ${isNotified ? 'badge-green' : 'badge-amber'}" style="font-weight:700;">
+                    ${isNotified ? 'SLOT AVAILABLE - CLAIM NOW' : 'WAITLIST QUEUED'}
+                  </span>
+                  <span style="font-size:0.8rem;color:var(--text-muted);font-weight:600;">Position #1</span>
+                </div>
+                <div style="font-weight:800;color:var(--secondary);font-size:1.05rem;">
+                  ${court ? court.name : 'Sports Court'} &bull; ${w.date ? TurfUI.formatDate(w.date) : 'Upcoming'} @ ${TurfUI.formatTime(w.startTime)}
+                </div>
+                <div style="font-size:0.825rem;color:var(--text-muted);margin-top:0.15rem;">
+                  ${isNotified ? 'A slot was released! Confirm your reservation before the 15-minute priority window expires.' : 'We will notify you via instant SMS/Email as soon as a player cancels this slot.'}
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:0.6rem;align-items:center;">
+              ${isNotified ? `
+                <a href="booking.html?venue=${court?.venueId || 'venue-1'}" class="btn btn-primary btn-sm" style="font-weight:700;">
+                  Claim Slot Now &rarr;
+                </a>
+              ` : ''}
+              <button class="btn btn-outline btn-sm" style="color:var(--text-muted);border-color:rgba(0,0,0,0.15);" onclick="cancelWaitlistEntry('${w.id}')">
+                Cancel Queue Ticket
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderBookingsList(user) {
+      const container = document.getElementById('bookings-list-container');
+      if (!container) return;
+
+      const allBookings = TurfStorage.getUserBookings(user?.email);
+
+      const upcomingCount = allBookings.filter(b => b.status === 'CONFIRMED').length;
+      const pastCount = allBookings.filter(b => b.status === 'CANCELLED').length;
+      
+      const countUpcomingEl = document.getElementById('count-upcoming');
+      const countPastEl = document.getElementById('count-past');
+      const countAllEl = document.getElementById('count-all');
+      if (countUpcomingEl) countUpcomingEl.textContent = upcomingCount;
+      if (countPastEl) countPastEl.textContent = pastCount;
+      if (countAllEl) countAllEl.textContent = allBookings.length;
+
+      let displayList = allBookings;
+      if (currentFilter === 'UPCOMING') {
+        displayList = allBookings.filter(b => b.status === 'CONFIRMED');
+      } else if (currentFilter === 'PAST') {
+        displayList = allBookings.filter(b => b.status === 'CANCELLED');
+      }
+
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        displayList = displayList.filter(b => 
+          (b.courtName && b.courtName.toLowerCase().includes(query)) ||
+          (b.venueName && b.venueName.toLowerCase().includes(query)) ||
+          (b.sport && b.sport.toLowerCase().includes(query)) ||
+          (b.id && b.id.toLowerCase().includes(query))
+        );
+      }
+
+      if (displayList.length === 0) {
+        container.innerHTML = `
+          <div class="card" style="text-align:center;padding:3.5rem 1.5rem;">
+            <div style="font-size:3rem;margin-bottom:0.75rem;">🎫</div>
+            <p style="font-size:1.2rem;font-weight:800;color:var(--secondary);margin-bottom:0.35rem;">No match passes found</p>
+            <p style="font-size:0.925rem;color:var(--text-muted);margin-bottom:1.5rem;max-width:480px;margin-left:auto;margin-right:auto;">
+              ${searchQuery ? `No reservations match "${searchQuery}". Try clearing your search.` : 'You have no active bookings under this filter. Explore top-rated turf arenas in Mumbai and book your slot!'}
+            </p>
+            <a href="venues.html" class="btn btn-primary" style="font-weight:700;">Explore Venues & Book &rarr;</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = displayList.map(b => {
+        const isConfirmed = b.status === 'CONFIRMED';
+        const isCancelled = b.status === 'CANCELLED';
+        const refundInfo = TurfStorage.calculateRefund(b);
+
+        const sportIcons = {
+          'FOOTBALL': '⚽',
+          'CRICKET': '🏏',
+          'TENNIS': '🎾',
+          'PICKLEBALL': '🏓',
+          'BADMINTON': '🏸'
+        };
+        const sportIcon = sportIcons[b.sport] || '⚡';
+
+        return `
+          <div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1.5rem;border-left:5px solid ${isConfirmed ? 'var(--primary)' : 'var(--accent-red)'};">
+            <div style="flex-grow:1;min-width:280px;">
+              <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;flex-wrap:wrap;">
+                <span class="badge ${isConfirmed ? 'badge-green' : 'badge-red'}" style="font-weight:800;">
+                  ${b.status}
+                </span>
+                <span style="font-family:monospace;font-size:0.875rem;color:var(--text-muted);font-weight:700;background:var(--bg-subtle);padding:0.15rem 0.5rem;border-radius:var(--radius-sm);">
+                  #${b.id}
+                </span>
+                ${b.isRecurring ? '<span class="badge badge-blue">Recurring 4-Wk Pass</span>' : ''}
+              </div>
+
+              <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">
+                <span style="font-size:1.35rem;">${sportIcon}</span>
+                <h3 style="font-size:1.3rem;font-weight:800;color:var(--secondary);margin:0;">${b.courtName}</h3>
+              </div>
+
+              <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.75rem;">
+                📍 ${b.venueName} &bull; Mumbai &bull; Sport: <strong>${b.sport}</strong>
+              </p>
+
+              <div style="background:var(--bg-subtle);padding:0.65rem 1rem;border-radius:var(--radius-md);margin-bottom:0.75rem;display:inline-flex;align-items:center;gap:1.25rem;flex-wrap:wrap;">
+                <div style="font-size:0.925rem;font-weight:700;color:var(--secondary);">
+                  📅 ${TurfUI.formatDate(b.date)}
+                </div>
+                <div style="font-size:0.925rem;font-weight:700;color:var(--primary-dark);">
+                  ⏰ ${TurfUI.formatTime(b.startTime)} - ${TurfUI.formatTime(b.endTime || '20:00')}
+                </div>
+              </div>
+
+              <div style="font-size:0.85rem;color:var(--secondary-muted);">
+                Payment: <strong>${b.paymentMethod || 'Stripe Digital Card'}</strong> &bull; Total Paid: <strong>₹${Number(b.totalAmount).toLocaleString('en-IN')}</strong> (incl. 18% GST)
+              </div>
+
+              ${isCancelled ? `
+                <div style="margin-top:0.75rem;font-size:0.85rem;color:var(--accent-red);background:var(--accent-red-light);padding:0.5rem 0.85rem;border-radius:var(--radius-md);border:1px solid rgba(239,68,68,0.25);">
+                  ✕ Cancelled on ${TurfUI.formatDate(b.cancelledAt?.split('T')[0] || b.date)}. Stripe Refund Processed: <strong>₹${(b.refundAmount || 0).toLocaleString('en-IN')} (${b.refundPercent || 0}%)</strong>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div style="display:flex;flex-direction:column;gap:0.5rem;align-items:flex-end;min-width:180px;">
+              ${isConfirmed ? `
+                <button class="btn btn-primary btn-sm btn-block" onclick="openGatePassModal('${b.id}')" style="font-weight:700;">
+                  🎟️ View Gate QR Pass
+                </button>
+                <button class="btn btn-outline btn-sm btn-block" onclick="addToCalendar('${b.id}')" style="font-size:0.825rem;">
+                  📅 Add to Calendar
+                </button>
+                <button class="btn btn-outline-primary btn-sm btn-block" onclick="openReviewModal('${b.venueId}', '${b.id}', '${b.venueName}')" style="font-size:0.825rem;">
+                  ⭐ Rate Venue
+                </button>
+                <button class="btn btn-outline btn-sm btn-block" style="color:var(--accent-red);border-color:rgba(239,68,68,0.35);font-size:0.825rem;margin-top:0.25rem;" onclick="openCancelModal('${b.id}')">
+                  Cancel Reservation
+                </button>
+              ` : `
+                <a href="booking.html?venue=${b.venueId}" class="btn btn-primary btn-sm btn-block">
+                  Book Slot Again &rarr;
+                </a>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterBookings(filter) {
+      currentFilter = filter;
+      document.getElementById('tab-upcoming').className = filter === 'UPCOMING' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+      document.getElementById('tab-past').className = filter === 'PAST' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+      document.getElementById('tab-all').className = filter === 'ALL' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+      renderDashboard();
+    }
+
+    function handleSearchFilter(query) {
+      searchQuery = query;
+      const user = TurfStorage.getCurrentUser();
+      renderBookingsList(user);
+    }
+
+    function cancelWaitlistEntry(waitlistId) {
+      if (confirm('Are you sure you want to cancel your position in this slot waitlist?')) {
+        TurfStorage.cancelWaitlist(waitlistId);
+        TurfUI.showToast('✓ Waitlist queue ticket cancelled.', 'info');
+        renderDashboard();
+      }
+    }
+
+    // Digital Gate Pass Modal
+    function openGatePassModal(bookingId) {
+      const booking = TurfStorage.getBookingById(bookingId);
+      if (!booking) return;
+
+      const user = TurfStorage.getCurrentUser() || { fullName: 'Alex Morgan', phone: '+91 98765 43210' };
+      const content = document.getElementById('gate-pass-ticket-content');
+
+      // Generate a dynamic mock QR code pattern via SVG
+      const qrSvg = `
+        <svg width="140" height="140" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="140" height="140" fill="white"/>
+          <rect x="10" y="10" width="35" height="35" stroke="#0f172a" stroke-width="5" fill="none"/>
+          <rect x="20" y="20" width="15" height="15" fill="#0f172a"/>
+          <rect x="95" y="10" width="35" height="35" stroke="#0f172a" stroke-width="5" fill="none"/>
+          <rect x="105" y="20" width="15" height="15" fill="#0f172a"/>
+          <rect x="10" y="95" width="35" height="35" stroke="#0f172a" stroke-width="5" fill="none"/>
+          <rect x="20" y="105" width="15" height="15" fill="#0f172a"/>
+          <rect x="55" y="15" width="10" height="20" fill="#10b981"/>
+          <rect x="75" y="15" width="10" height="10" fill="#0f172a"/>
+          <rect x="55" y="45" width="30" height="10" fill="#0f172a"/>
+          <rect x="15" y="55" width="20" height="10" fill="#10b981"/>
+          <rect x="45" y="65" width="15" height="15" fill="#0f172a"/>
+          <rect x="70" y="65" width="20" height="10" fill="#0f172a"/>
+          <rect x="100" y="55" width="25" height="10" fill="#10b981"/>
+          <rect x="55" y="95" width="20" height="15" fill="#0f172a"/>
+          <rect x="85" y="90" width="15" height="20" fill="#10b981"/>
+          <rect x="110" y="95" width="20" height="10" fill="#0f172a"/>
+          <rect x="55" y="120" width="30" height="10" fill="#10b981"/>
+          <rect x="95" y="115" width="35" height="15" fill="#0f172a"/>
+        </svg>
+      `;
+
+      content.innerHTML = `
+        <div class="ticket-header">
+          <div style="font-size:0.8rem;font-weight:800;color:var(--primary-dark);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.25rem;">
+            ⚡ TURFSYNC OFFICIAL MATCH PASS
+          </div>
+          <h2 style="font-size:1.45rem;font-weight:800;color:var(--secondary);margin-bottom:0.2rem;">
+            ${booking.courtName}
+          </h2>
+          <p style="font-size:0.85rem;color:var(--text-muted);">
+            📍 ${booking.venueName} &bull; Mumbai
+          </p>
+        </div>
+
+        <div style="display:flex;justify-content:center;margin:0.5rem 0;">
+          <div class="ticket-qr-matrix">
+            ${qrSvg}
+            <div style="font-family:monospace;font-weight:800;font-size:0.95rem;color:var(--secondary);margin-top:0.4rem;letter-spacing:0.1em;">
+              ${booking.id}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;text-align:left;background:#f8fafc;padding:0.85rem 1rem;border-radius:var(--radius-md);margin-top:0.5rem;font-size:0.85rem;">
+          <div>
+            <span style="color:var(--text-muted);font-size:0.75rem;display:block;">MATCH DATE</span>
+            <strong style="color:var(--secondary);">${TurfUI.formatDate(booking.date)}</strong>
+          </div>
+          <div>
+            <span style="color:var(--text-muted);font-size:0.75rem;display:block;">TIME SLOT</span>
+            <strong style="color:var(--primary-dark);">${TurfUI.formatTime(booking.startTime)} - ${TurfUI.formatTime(booking.endTime || '20:00')}</strong>
+          </div>
+          <div>
+            <span style="color:var(--text-muted);font-size:0.75rem;display:block;">PLAYER NAME</span>
+            <strong style="color:var(--secondary);">${booking.userName || user.fullName}</strong>
+          </div>
+          <div>
+            <span style="color:var(--text-muted);font-size:0.75rem;display:block;">GATE PIN</span>
+            <strong style="color:var(--secondary);font-family:monospace;letter-spacing:0.05em;">TS-${booking.id.split('-').pop() || '7721'}</strong>
+          </div>
+        </div>
+      `;
+
+      TurfUI.openModal('gate-pass-modal');
+    }
+
+    // Add to Calendar helper
+    function addToCalendar(bookingId) {
+      const booking = TurfStorage.getBookingById(bookingId);
+      if (!booking) return;
+
+      const dateClean = booking.date.replace(/-/g, '');
+      const startClean = booking.startTime.replace(/:/g, '') + '00';
+      const endHour = (parseInt(booking.startTime.split(':')[0]) + 1).toString().padStart(2, '0');
+      const endClean = `${endHour}0000`;
+
+      const title = encodeURIComponent(`Match @ ${booking.courtName} (${booking.venueName})`);
+      const details = encodeURIComponent(`TurfSync Booking #${booking.id}\nSport: ${booking.sport}\nVenue: ${booking.venueName}, Mumbai`);
+      const location = encodeURIComponent(`${booking.venueName}, Mumbai`);
+
+      const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateClean}T${startClean}/${dateClean}T${endClean}&details=${details}&location=${location}`;
+
+      window.open(googleCalUrl, '_blank');
+      TurfUI.showToast('📅 Opening Google Calendar to add match pass...', 'info');
+    }
+
+    // Cancellation Modal
+    function openCancelModal(bookingId) {
+      const booking = TurfStorage.getBookingById(bookingId);
+      if (!booking) return;
+
+      document.getElementById('cancel-booking-id').value = bookingId;
+      const refund = TurfStorage.calculateRefund(booking);
+
+      const content = document.getElementById('refund-preview-content');
+      content.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.85rem;color:var(--text-muted);">Hours until match start:</span>
+          <strong style="color:var(--secondary);">${refund.diffHours} hrs</strong>
+        </div>
+        <div class="refund-tier-active">
+          <div>
+            <div style="font-weight:700;color:var(--primary-dark);">${refund.tierLabel}</div>
+            <div style="font-size:0.775rem;color:var(--primary-dark);">Original Total: ₹${booking.totalAmount.toLocaleString('en-IN')}</div>
+          </div>
+          <div class="refund-rate">₹${refund.refundAmount.toLocaleString('en-IN')}</div>
+        </div>
+        <p style="font-size:0.775rem;color:var(--text-muted);margin:0;">
+          Refunds are automatically issued back to your original payment card via Stripe within 2-3 business days.
+        </p>
+      `;
+
+      TurfUI.openModal('cancel-modal');
+    }
+
+    async function confirmCancellation() {
+      const bookingId = document.getElementById('cancel-booking-id').value;
+      const reason = document.getElementById('cancel-reason').value;
+
+      let result = null;
+      if (window.TurfAPI) {
+        const res = await TurfAPI.cancelBooking(bookingId, reason);
+        if (res && res.success) {
+          result = res.booking;
+        }
+      }
+      if (!result) {
+        result = TurfStorage.cancelBooking(bookingId, reason);
+      }
+
+      if (result) {
+        TurfUI.closeModal('cancel-modal');
+        renderDashboard();
+        const refundAmt = result.refundInfo?.refundAmount !== undefined ? result.refundInfo.refundAmount : (result.refundAmount || 0);
+        TurfUI.showToast(`✓ Booking cancelled. Stripe Refund of ₹${refundAmt.toLocaleString('en-IN')} initiated!`, 'success');
+      }
+    }
+
+    // Venue Review Modal
+    function openReviewModal(venueId, bookingId, venueName) {
+      document.getElementById('review-venue-id').value = venueId;
+      document.getElementById('review-booking-id').value = bookingId;
+      document.getElementById('review-venue-name').textContent = venueName;
+      TurfUI.openModal('review-modal');
+    }
+
+    function submitReview() {
+      const venueId = document.getElementById('review-venue-id').value;
+      const comment = document.getElementById('review-comment').value.trim();
+      const currentUser = TurfStorage.getCurrentUser();
+
+      TurfStorage.addReview({
+        venueId,
+        userName: currentUser ? currentUser.fullName : 'Verified Player',
+        rating: selectedRating,
+        comment: comment || 'Great turf facility and seamless automated booking!'
+      });
+
+      TurfUI.closeModal('review-modal');
+      TurfUI.showToast('✓ Thank you! Your review has been published.', 'success');
+    }
+
+    // Star rating interactions
+    document.querySelectorAll('#star-rating-container .star').forEach(star => {
+      star.addEventListener('click', (e) => {
+        selectedRating = parseInt(e.target.dataset.value);
+        document.querySelectorAll('#star-rating-container .star').forEach((s, idx) => {
+          if (idx < selectedRating) s.classList.add('selected');
+          else s.classList.remove('selected');
+        });
+      });
+    });
+
+    document.addEventListener('DOMContentLoaded', renderDashboard);
+  </script>
+</body>
+</html>
