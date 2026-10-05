@@ -1,6 +1,14 @@
 const { supabase, isSupabaseConfigured } = require('../config/supabase');
 const DB = require('../config/db');
 
+// Venues store sports as JSON; derive from courts when it's missing or empty
+function venueSports(v, courts) {
+  let sports = v.sports;
+  if (typeof sports === 'string') { try { sports = JSON.parse(sports); } catch (e) { sports = []; } }
+  if (!Array.isArray(sports) || sports.length === 0) sports = [...new Set(courts.map(c => c.sport))];
+  return sports;
+}
+
 const dbAdapter = {
   isSupabase() {
     return isSupabaseConfigured() && supabase !== null;
@@ -13,20 +21,24 @@ const dbAdapter = {
       if (!error && data) {
         // Also fetch courts
         const { data: courts } = await supabase.from('courts').select('*');
-        return data.map(v => ({
-          ...v,
-          cancellationPolicyHours: v.cancellation_policy_hours,
-          openingTime: v.opening_time,
-          closingTime: v.closing_time,
-          reviewCount: v.review_count,
-          courts: (courts || []).filter(c => c.venue_id === v.id).map(c => ({
-            ...c,
-            venueId: c.venue_id,
-            baseRate: Number(c.base_rate),
-            isActive: c.is_active,
-            isIndoor: c.is_indoor
-          }))
-        }));
+        return data.map(v => {
+          const venueCourts = (courts || []).filter(c => c.venue_id === v.id);
+          return {
+            ...v,
+            sports: venueSports(v, venueCourts),
+            cancellationPolicyHours: v.cancellation_policy_hours,
+            openingTime: v.opening_time,
+            closingTime: v.closing_time,
+            reviewCount: v.review_count,
+            courts: venueCourts.map(c => ({
+              ...c,
+              venueId: c.venue_id,
+              baseRate: Number(c.base_rate),
+              isActive: c.is_active,
+              isIndoor: c.is_indoor
+            }))
+          };
+        });
       }
     }
     return DB.venues.map(v => {
@@ -42,6 +54,7 @@ const dbAdapter = {
         const { data: courts } = await supabase.from('courts').select('*').eq('venue_id', id);
         return {
           ...v,
+          sports: venueSports(v, courts || []),
           cancellationPolicyHours: v.cancellation_policy_hours,
           openingTime: v.opening_time,
           closingTime: v.closing_time,
