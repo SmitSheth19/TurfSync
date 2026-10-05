@@ -39,13 +39,14 @@ const TurfAPI = {
 
   async checkBackendHealth() {
     if (this.isBackendOnline !== null) return this.isBackendOnline;
-    try {
-      const res = await fetch(`${this.BASE_URL}/venues`, { method: 'GET', signal: AbortSignal.timeout(1500) });
-      this.isBackendOnline = res.ok;
-    } catch (e) {
-      this.isBackendOnline = false;
+    // Share one in-flight check; allow time for a serverless cold start
+    if (!this._healthCheck) {
+      this._healthCheck = fetch(`${this.BASE_URL}/health`, { method: 'GET', signal: AbortSignal.timeout(10000) })
+        .then(res => res.ok)
+        .catch(() => false)
+        .then(ok => (this.isBackendOnline = ok));
     }
-    return this.isBackendOnline;
+    return this._healthCheck;
   },
 
   getAuthHeaders() {
@@ -109,17 +110,8 @@ const TurfAPI = {
     if (online) {
       try {
         const res = await fetch(`${this.BASE_URL}/venues`);
-        if (res.ok) {
-          const venues = await res.json();
-          // Map courts into venue structure for frontend compatibility
-          for (let v of venues) {
-            const courtRes = await fetch(`${this.BASE_URL}/venues/${v.id}/courts`);
-            if (courtRes.ok) {
-              v.courts = await courtRes.json();
-            }
-          }
-          return venues;
-        }
+        // Courts are already embedded in each venue by the API
+        if (res.ok) return await res.json();
       } catch (e) {
         console.warn('Failed to fetch venues from backend, using local data:', e);
       }
