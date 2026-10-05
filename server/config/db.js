@@ -240,7 +240,7 @@ const DB = {
       cancellationPolicyHours: 24,
       openingTime: "06:00",
       closingTime: "23:00",
-      image: "https://images.unsplash.com/photo-1529900245534-47fbf82215dd?auto=format&fit=crop&w=800&q=80"
+      image: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=80"
     },
     {
       id: "venue-2",
@@ -332,7 +332,7 @@ const DB = {
       cancellationPolicyHours: 12,
       openingTime: "06:00",
       closingTime: "24:00",
-      image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80"
+      image: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=800&q=80"
     },
     {
       id: "venue-8",
@@ -347,7 +347,7 @@ const DB = {
       cancellationPolicyHours: 24,
       openingTime: "06:00",
       closingTime: "22:00",
-      image: "https://images.unsplash.com/photo-1540747913346-19212a4b423f?auto=format&fit=crop&w=800&q=80"
+      image: "https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&w=800&q=80"
     },
     {
       id: "venue-9",
@@ -362,7 +362,7 @@ const DB = {
       cancellationPolicyHours: 24,
       openingTime: "06:00",
       closingTime: "22:30",
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80"
+      image: "https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&w=800&q=80"
     },
     {
       id: "venue-10",

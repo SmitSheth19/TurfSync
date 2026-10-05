@@ -4,7 +4,7 @@
 const IMG = id => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=800&q=80`;
 
 const venues = [
-  { id: 'venue-1',  name: 'Apex Arena Sports Complex',        area: 'BKC',            address: 'Plot C-12, G Block, Bandra Kurla Complex',     tagline: 'Premier 7v7 football & cricket in BKC',           image: IMG('1529900245534-47fbf82215dd'), open: '06:00', close: '23:00', policy: 24,
+  { id: 'venue-1',  name: 'Apex Arena Sports Complex',        area: 'BKC',            address: 'Plot C-12, G Block, Bandra Kurla Complex',     tagline: 'Premier 7v7 football & cricket in BKC',           image: IMG('1551958219-acbc608c6377'), open: '06:00', close: '23:00', policy: 24,
     description: 'FIFA-approved artificial turf, a floodlit cricket pitch and indoor badminton, minutes from the BKC business district.' },
   { id: 'venue-2',  name: 'Metro Kick Rooftop Arena',         area: 'Andheri West',   address: 'Rooftop, Infiniti Mall Annexe, Link Road',      tagline: 'Rooftop football under the Andheri skyline',       image: IMG('1574629810360-7efbbe195018'), open: '07:00', close: '24:00', policy: 12,
     description: 'A rooftop 5v5 turf and box-cricket cage with skyline views, open till midnight.' },
@@ -18,15 +18,15 @@ const venues = [
     description: 'Full-size football turf, cricket nets, tennis and badminton courts across one campus.' },
   { id: 'venue-7',  name: 'Kick Factory Borivali',            area: 'Borivali West',  address: 'Rooftop, Chamunda Circle, S.V. Road',           tagline: 'Rooftop turf next to Borivali station',            image: IMG('1575361204480-aadea25e6e68'), open: '06:00', close: '24:00', policy: 6,
     description: 'Well-lit rooftop turfs two minutes from the station, ideal for after-work games.' },
-  { id: 'venue-8',  name: 'Elite Cricket Academy',            area: 'Kandivali East', address: 'Thakur Village, Western Express Highway',       tagline: 'Turf wickets and bowling machines',                image: IMG('1540747913346-19212a4b423f'), open: '06:00', close: '21:00', policy: 48,
+  { id: 'venue-8',  name: 'Elite Cricket Academy',            area: 'Kandivali East', address: 'Thakur Village, Western Express Highway',       tagline: 'Turf wickets and bowling machines',                image: IMG('1624526267942-ab0ff8a3e972'), open: '06:00', close: '21:00', policy: 48,
     description: 'Practice nets with bowling machines and a full turf wicket for match practice.' },
   { id: 'venue-9',  name: 'Mumbai Sports Village',            area: 'Chembur',        address: 'Diamond Garden, Sion-Trombay Road',             tagline: 'Everything in one place in Chembur',               image: IMG('1518604666860-9ed391f76460'), open: '06:00', close: '23:00', policy: 24,
     description: 'Football, cricket, badminton and pickleball courts with a café and changing rooms.' },
-  { id: 'venue-10', name: 'Kings Court Dadar',                area: 'Dadar West',     address: 'Near Shivaji Park, Kelkar Road',                tagline: 'Indoor badminton & pickleball near Shivaji Park',  image: IMG('1558618666-fcd25c85cd64'), open: '06:00', close: '22:00', policy: 12,
+  { id: 'venue-10', name: 'Kings Court Dadar',                area: 'Dadar West',     address: 'Near Shivaji Park, Kelkar Road',                tagline: 'Indoor badminton & pickleball near Shivaji Park',  image: IMG('1626224583764-f87db24ac4ea'), open: '06:00', close: '22:00', policy: 12,
     description: 'Air-conditioned wooden badminton courts and pickleball courts in central Mumbai.' },
   { id: 'venue-11', name: 'Bandstand Football Club',          area: 'Bandra West',    address: 'Bandstand Promenade, Mount Mary Road',          tagline: 'Sea-facing 5v5 in Bandra',                         image: IMG('1553778263-73a83bab9b0c'), open: '06:00', close: '23:00', policy: 24,
     description: 'Two sea-facing 5v5 turfs with evening floodlights, steps from Bandstand.' },
-  { id: 'venue-12', name: 'Worli Sports Dome',                area: 'Worli',          address: 'Dr. Annie Besant Road, Worli Naka',             tagline: 'All-weather indoor dome in Worli',                 image: IMG('1571019613454-1cb2f99b2d8b'), open: '06:00', close: '24:00', policy: 24,
+  { id: 'venue-12', name: 'Worli Sports Dome',                area: 'Worli',          address: 'Dr. Annie Besant Road, Worli Naka',             tagline: 'All-weather indoor dome in Worli',                 image: IMG('1599474924187-334a4ae5bd3c'), open: '06:00', close: '24:00', policy: 24,
     description: 'Monsoon-proof indoor dome with football, tennis and badminton courts.' }
 ];
 

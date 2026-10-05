@@ -15,7 +15,7 @@ const DEFAULT_DATA = {
       sports: ["FOOTBALL", "CRICKET", "BADMINTON"],
       rating: 4.8,
       reviewCount: 124,
-      image: "https://images.unsplash.com/photo-1529900245534-47fbfb57835a?auto=format&fit=crop&w=800&q=80",
+      image: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=80",
       cancellationPolicyHours: 24,
       openingTime: "06:00",
       closingTime: "23:00",

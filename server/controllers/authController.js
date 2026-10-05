@@ -69,7 +69,7 @@ exports.register = async (req, res) => {
         cancellationPolicyHours: 24,
         openingTime: "06:00",
         closingTime: "23:00",
-        image: "https://images.unsplash.com/photo-1529900245534-47fbf82215dd?auto=format&fit=crop&w=800&q=80"
+        image: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&w=800&q=80"
       };
       await dbAdapter.createVenue(newVenue);
       await dbAdapter.createCourt({
