@@ -320,7 +320,7 @@ const TurfCalendar = {
       return;
     }
 
-    TurfStorage.joinWaitlist({
+    TurfAPI.joinWaitlist({
       courtId,
       date: dateStr,
       startTime: timeStr,

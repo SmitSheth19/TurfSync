@@ -12,9 +12,13 @@ exports.getMyWaitlist = async (req, res) => {
 
 exports.joinWaitlist = async (req, res) => {
   try {
-    const { courtId, bookingDate, startTime, courtName, venueId } = req.body;
+    const { courtId, startTime, courtName, venueId } = req.body;
+    const bookingDate = req.body.bookingDate || req.body.date;
+    if (!courtId || !bookingDate || !startTime) {
+      return res.status(400).json({ error: 'courtId, bookingDate and startTime are required.' });
+    }
     const newEntry = {
-      id: `wl-${Date.now()}`,
+      id: /^wl-\d+$/.test(req.body.id) ? req.body.id : `wl-${Date.now()}`,
       courtId,
       courtName: courtName || 'Sports Court',
       venueId: venueId || 'venue-1',
@@ -23,6 +27,7 @@ exports.joinWaitlist = async (req, res) => {
       userId: req.user ? req.user.id : (req.body.userId || 'user-1'),
       userName: req.user ? req.user.fullName : (req.body.userName || 'Alex Morgan'),
       userEmail: req.user ? req.user.email : (req.body.userEmail || 'player@turfsync.com'),
+      userPhone: req.body.userPhone || null,
       status: 'WAITING',
       createdAt: new Date().toISOString(),
       notifiedAt: null

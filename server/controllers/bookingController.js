@@ -52,7 +52,8 @@ exports.getSlotMatrix = async (req, res) => {
 
 // Confirm Booking — Atomic Concurrency via DB unique index (Supabase) or in-memory mutex (local)
 exports.confirmBooking = async (req, res) => {
-  const { courtId, venueId, bookingDate, startTime, endTime, totalAmount, sport, courtName, venueName, isRecurring } = req.body;
+  const { courtId, venueId, startTime, endTime, totalAmount, sport, courtName, venueName, isRecurring } = req.body;
+  const bookingDate = req.body.bookingDate || req.body.date;
 
   if (!courtId || !bookingDate || !startTime) {
     return res.status(400).json({ error: 'courtId, bookingDate, and startTime are required.' });

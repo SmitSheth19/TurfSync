@@ -9,7 +9,7 @@ const TurfAdmin = {
 
   init() {
     const user = TurfStorage.getCurrentUser();
-    if (!user || user.role !== 'VENUE_ADMIN') {
+    if (!user || !TurfStorage.isOwner(user)) {
       alert('Access restricted: Please log in with a Facility Owner account to view the Owner Portal.');
       window.location.href = 'login.html';
       return;
@@ -135,11 +135,13 @@ const TurfAdmin = {
   },
 
   toggleCourtStatus(courtId) {
-    const venue = TurfStorage.getVenueById(this.currentVenueId);
+    const data = TurfStorage.getData();
+    const venue = data.venues.find(v => v.id === this.currentVenueId);
     const court = venue?.courts.find(c => c.id === courtId);
     if (court) {
       court.isActive = !court.isActive;
-      TurfStorage.saveData(TurfStorage.getData());
+      TurfStorage.saveData(data);
+      TurfAPI.toggleCourt(courtId);
       this.renderCourtMatrix();
       TurfUI.showToast(`Court status updated: ${court.name} is now ${court.isActive ? 'Active' : 'Blocked'}.`, 'info');
     }
@@ -171,7 +173,7 @@ const TurfAdmin = {
   },
 
   deletePricingRule(ruleId) {
-    TurfStorage.deletePricingRule(ruleId);
+    TurfAPI.deletePricingRule(ruleId);
     this.renderPricingRules();
     TurfUI.showToast('Dynamic pricing rule deleted.', 'info');
   },
@@ -180,7 +182,7 @@ const TurfAdmin = {
     const form = document.getElementById('offline-booking-form');
     if (!form) return;
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const courtId = document.getElementById('off-court-id').value;
       const dateStr = document.getElementById('off-date').value;
@@ -196,7 +198,7 @@ const TurfAdmin = {
         return;
       }
 
-      TurfStorage.createBooking({
+      const result = await TurfAPI.createOfflineBooking({
         venueId: this.currentVenueId,
         courtId: courtId,
         courtName: court.name,
@@ -213,6 +215,10 @@ const TurfAdmin = {
         isRecurring: false,
         paymentMethod: 'Cash / On-Site'
       });
+      if (!result.success) {
+        TurfUI.showToast(result.error, 'error');
+        return;
+      }
 
       TurfUI.closeModal('offline-booking-modal');
       this.renderKPIs();

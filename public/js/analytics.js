@@ -8,7 +8,7 @@ const TurfAnalytics = {
 
   init() {
     const user = TurfStorage.getCurrentUser();
-    if (!user || user.role !== 'VENUE_ADMIN') {
+    if (!user || !TurfStorage.isOwner(user)) {
       alert('Access restricted: Please log in with a Facility Owner account to view analytics.');
       window.location.href = 'login.html';
       return;

@@ -137,7 +137,7 @@ const TurfUI = {
           <li><a href="venues.html" class="nav-link">Explore Venues</a></li>
           <li><a href="booking.html?venue=venue-1" class="nav-link">Book Turf</a></li>
         `;
-      } else if (user.role === 'VENUE_ADMIN') {
+      } else if (TurfStorage.isOwner(user)) {
         // Facility Owner: Administrative controls and facility management
         navLinks.innerHTML = `
           <li><a href="admin-dashboard.html" class="nav-link" style="color:var(--primary);font-weight:700;">🏟️ Owner Dashboard</a></li>
@@ -173,7 +173,7 @@ const TurfUI = {
     // 2. Render right-hand action buttons / Profile pills
     if (user) {
       const initials = user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
-      const isOwner = user.role === 'VENUE_ADMIN';
+      const isOwner = TurfStorage.isOwner(user);
 
       navActions.innerHTML = `
         <div style="display:flex;align-items:center;gap:0.75rem;">

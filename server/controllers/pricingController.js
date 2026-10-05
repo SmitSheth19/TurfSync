@@ -15,10 +15,10 @@ exports.getRules = async (req, res) => {
 
 exports.addRule = async (req, res) => {
   const venueId = (req.user && req.user.venueId) ? req.user.venueId : req.body.venueId;
+  const { name, days, startTime, endTime, multiplier, badgeText } = req.body;
   const newRule = {
-    id: `rule-${Date.now()}`,
-    ...req.body,
-    venueId
+    id: /^rule-\d+$/.test(req.body.id) ? req.body.id : `rule-${Date.now()}`,
+    venueId, name, days, startTime, endTime, multiplier, badgeText
   };
   try {
     await dbAdapter.createPricingRule(newRule);

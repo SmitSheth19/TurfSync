@@ -204,7 +204,7 @@
   <script src="js/api-client.js"></script>
   <script src="js/ui.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    TurfAPI.onReady(() => {
       // Set today's date in hero datepicker
       const todayStr = new Date().toISOString().split('T')[0];
       const dateInput = document.getElementById('hero-date-input');

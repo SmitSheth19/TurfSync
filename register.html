@@ -290,7 +290,7 @@
         if (result && result.success) {
           TurfUI.showToast(`✓ Account created! Welcome, ${result.user.fullName}!`, 'success');
           setTimeout(() => {
-            if (result.user.role === 'VENUE_ADMIN') {
+            if (TurfStorage.isOwner(result.user)) {
               window.location.href = 'admin-dashboard.html';
             } else {
               window.location.href = 'my-bookings.html';

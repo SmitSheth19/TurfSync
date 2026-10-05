@@ -17,7 +17,7 @@ const dbAdapter = {
   // Venues
   async getVenues() {
     if (this.isSupabase()) {
-      const { data, error } = await supabase.from('venues').select('*');
+      const { data, error } = await supabase.from('venues').select('*').order('created_at');
       if (!error && data) {
         // Also fetch courts
         const { data: courts } = await supabase.from('courts').select('*');
@@ -433,7 +433,9 @@ const dbAdapter = {
   // Reviews
   async getReviews(venueId) {
     if (this.isSupabase()) {
-      const { data, error } = await supabase.from('reviews').select('*').eq('venue_id', venueId);
+      let q = supabase.from('reviews').select('*').order('date', { ascending: false });
+      if (venueId) q = q.eq('venue_id', venueId);
+      const { data, error } = await q;
       if (!error && data) {
         return data.map(r => ({
           id: r.id,
@@ -445,7 +447,7 @@ const dbAdapter = {
         }));
       }
     }
-    return DB.reviews.filter(r => r.venueId === venueId);
+    return venueId ? DB.reviews.filter(r => r.venueId === venueId) : DB.reviews;
   },
 
   async createReview(review) {

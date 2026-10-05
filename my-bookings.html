@@ -519,7 +519,7 @@
 
     function cancelWaitlistEntry(waitlistId) {
       if (confirm('Are you sure you want to cancel your position in this slot waitlist?')) {
-        TurfStorage.cancelWaitlist(waitlistId);
+        TurfAPI.cancelWaitlist(waitlistId);
         TurfUI.showToast('✓ Waitlist queue ticket cancelled.', 'info');
         renderDashboard();
       }
@@ -688,7 +688,7 @@
       const comment = document.getElementById('review-comment').value.trim();
       const currentUser = TurfStorage.getCurrentUser();
 
-      TurfStorage.addReview({
+      TurfAPI.addReview({
         venueId,
         userName: currentUser ? currentUser.fullName : 'Verified Player',
         rating: selectedRating,
@@ -710,7 +710,7 @@
       });
     });
 
-    document.addEventListener('DOMContentLoaded', renderDashboard);
+    TurfAPI.onReady(renderDashboard);
   </script>
 </body>
 </html>

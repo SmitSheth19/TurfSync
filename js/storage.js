@@ -49,9 +49,14 @@ const TurfStorage = {
     return this.getData().venues || [];
   },
 
+  // The API uses ROLE_VENUE_ADMIN; locally created accounts use VENUE_ADMIN
+  isOwner(user) {
+    return !!user && (user.role === 'VENUE_ADMIN' || user.role === 'ROLE_VENUE_ADMIN');
+  },
+
   getVenuesForUser(user) {
     const venues = this.getVenues();
-    if (user && (user.role === 'VENUE_ADMIN' || user.role === 'ROLE_VENUE_ADMIN')) {
+    if (this.isOwner(user)) {
       return venues.filter(v => v.id === user.venueId);
     }
     return venues;

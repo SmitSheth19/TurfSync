@@ -49,6 +49,114 @@ const TurfAPI = {
     return this._healthCheck;
   },
 
+  // Pull venues, pricing, reviews, bookings and waitlist from the backend into the
+  // TurfStorage cache that the pages render from. Resolves false when offline.
+  sync() {
+    if (!this._sync) {
+      this._sync = (async () => {
+        if (!(await this.checkBackendHealth())) return false;
+        try {
+          const res = await fetch(`${this.BASE_URL}/sync`, { headers: this.getAuthHeaders() });
+          if (!res.ok) return false;
+          const snap = await res.json();
+          const data = TurfStorage.getData();
+          data.venues = snap.venues;
+          data.pricingRules = snap.pricingRules;
+          data.reviews = snap.reviews;
+          data.bookings = snap.bookings.map(b => this._normalize(b));
+          data.waitlist = snap.waitlist.map(w => this._normalize(w));
+          TurfStorage.saveData(data);
+          return true;
+        } catch (e) {
+          console.warn('Sync with backend failed, using cached data:', e);
+          return false;
+        }
+      })();
+    }
+    return this._sync;
+  },
+
+  // Run fn once the DOM is ready and the backend sync has finished (or failed)
+  onReady(fn) {
+    const dom = document.readyState === 'loading'
+      ? new Promise(r => document.addEventListener('DOMContentLoaded', r))
+      : Promise.resolve();
+    Promise.all([dom, this.sync()]).then(() => fn());
+  },
+
+  // The pages use `date`; the API uses `bookingDate`
+  _normalize(item) {
+    return { ...item, date: item.date || item.bookingDate };
+  },
+
+  // Fire-and-forget write; local state has already been updated optimistically
+  async _send(method, path, body) {
+    if (!(await this.checkBackendHealth())) return null;
+    try {
+      const res = await fetch(`${this.BASE_URL}${path}`, {
+        method,
+        headers: this.getAuthHeaders(),
+        body: body ? JSON.stringify(body) : undefined
+      });
+      if (!res.ok) console.warn(`${method} ${path} failed:`, res.status);
+      return res;
+    } catch (e) {
+      console.warn(`${method} ${path} failed:`, e);
+      return null;
+    }
+  },
+
+  joinWaitlist(entry) {
+    const local = TurfStorage.joinWaitlist(entry);
+    this._send('POST', '/waitlist', { ...local, bookingDate: local.date });
+    return local;
+  },
+
+  cancelWaitlist(id) {
+    TurfStorage.cancelWaitlist(id);
+    this._send('DELETE', `/waitlist/${id}`);
+  },
+
+  addPricingRule(rule) {
+    const local = TurfStorage.addPricingRule(rule);
+    this._send('POST', '/pricing', local);
+    return local;
+  },
+
+  deletePricingRule(id) {
+    TurfStorage.deletePricingRule(id);
+    this._send('DELETE', `/pricing/${id}`);
+  },
+
+  addReview(review) {
+    const local = TurfStorage.addReview(review);
+    this._send('POST', `/venues/${local.venueId}/reviews`, local);
+    return local;
+  },
+
+  toggleCourt(courtId) {
+    this._send('PATCH', `/admin/courts/${courtId}/toggle`);
+  },
+
+  // Walk-in booking recorded by a venue owner
+  async createOfflineBooking(payload) {
+    if (await this.checkBackendHealth()) {
+      try {
+        const res = await fetch(`${this.BASE_URL}/admin/offline-booking`, {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify({ ...payload, bookingDate: payload.date })
+        });
+        const data = await res.json();
+        if (!res.ok) return { success: false, error: data.error || 'Could not save booking.' };
+        return { success: true, booking: TurfStorage.createBooking(this._normalize(data)) };
+      } catch (e) {
+        console.warn('Backend offline booking failed, saving locally:', e);
+      }
+    }
+    return { success: true, booking: TurfStorage.createBooking(payload) };
+  },
+
   getAuthHeaders() {
     const token = localStorage.getItem('TURFSYNC_JWT_TOKEN');
     return {
@@ -141,15 +249,16 @@ const TurfAPI = {
         const res = await fetch(`${this.BASE_URL}/bookings/confirm`, {
           method: 'POST',
           headers: this.getAuthHeaders(),
-          body: JSON.stringify(bookingPayload)
+          body: JSON.stringify({ ...bookingPayload, bookingDate: bookingPayload.date })
         });
         if (res.ok) {
-          const booking = await res.json();
-          TurfStorage.createBooking(booking); // Keep local storage in sync
+          const booking = TurfStorage.createBooking(this._normalize(await res.json())); // Keep local storage in sync
           return { success: true, booking };
         } else if (res.status === 409) {
           return { success: false, error: 'Slot already reserved by another player!' };
         }
+        const data = await res.json().catch(() => ({}));
+        return { success: false, error: data.error || 'Booking failed. Please try again.' };
       } catch (e) {
         console.warn('Backend booking failed, falling back to local storage:', e);
       }

@@ -176,17 +176,17 @@
 
     function fillDemo(type) {
       if (type === 'player') {
-        document.getElementById('login-email').value = 'player@turfsync.com';
-        document.getElementById('login-password').value = 'password123';
+        document.getElementById('login-email').value = 'player@turfsync.in';
+        document.getElementById('login-password').value = 'Player@123';
       } else if (type === 'admin1' || type === 'admin') {
-        document.getElementById('login-email').value = 'admin@apexarena.com';
-        document.getElementById('login-password').value = 'admin123';
+        document.getElementById('login-email').value = 'owner.apex@turfsync.in';
+        document.getElementById('login-password').value = 'Owner@123';
       } else if (type === 'admin2') {
-        document.getElementById('login-email').value = 'owner@metrokick.com';
-        document.getElementById('login-password').value = 'admin123';
+        document.getElementById('login-email').value = 'owner.metrokick@turfsync.in';
+        document.getElementById('login-password').value = 'Owner@123';
       } else if (type === 'admin3') {
-        document.getElementById('login-email').value = 'owner@smashpoint.com';
-        document.getElementById('login-password').value = 'admin123';
+        document.getElementById('login-email').value = 'owner.smashpoint@turfsync.in';
+        document.getElementById('login-password').value = 'Owner@123';
       }
       document.getElementById('login-error-alert').style.display = 'none';
     }
@@ -212,7 +212,7 @@
         if (result && result.success) {
           TurfUI.showToast(`Welcome back, ${result.user.fullName}!`, 'success');
           setTimeout(() => {
-            if (result.user.role === 'VENUE_ADMIN') {
+            if (TurfStorage.isOwner(result.user)) {
               window.location.href = 'admin-dashboard.html';
             } else {
               window.location.href = 'my-bookings.html';

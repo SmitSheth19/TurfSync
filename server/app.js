@@ -10,6 +10,7 @@ const bookingController  = require('./controllers/bookingController');
 const pricingController  = require('./controllers/pricingController');
 const waitlistController = require('./controllers/waitlistController');
 const adminController    = require('./controllers/adminController');
+const syncController     = require('./controllers/syncController');
 
 const app = express();
 
@@ -27,6 +28,9 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Frontend data snapshot
+app.get('/api/sync', syncController.getSnapshot);
 
 // Auth
 app.post('/api/auth/login',    authController.login);

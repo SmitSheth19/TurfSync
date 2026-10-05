@@ -169,7 +169,7 @@
 
     function initPricingPage() {
       const user = TurfStorage.getCurrentUser();
-      if (!user || user.role !== 'VENUE_ADMIN') {
+      if (!user || !TurfStorage.isOwner(user)) {
         alert('Access restricted: Please log in with a Facility Owner account to manage surge pricing.');
         window.location.href = 'login.html';
         return;
@@ -215,7 +215,7 @@
           const multiplier = parseFloat(document.getElementById('rule-multiplier-input').value);
           const badgeText = document.getElementById('rule-badge-input').value.trim();
 
-          TurfStorage.addPricingRule({
+          TurfAPI.addPricingRule({
             venueId: currentVenueId,
             name,
             startTime,
@@ -258,12 +258,12 @@
     }
 
     function deleteRule(ruleId) {
-      TurfStorage.deletePricingRule(ruleId);
+      TurfAPI.deletePricingRule(ruleId);
       renderRules();
       TurfUI.showToast('Pricing rule removed.', 'info');
     }
 
-    document.addEventListener('DOMContentLoaded', initPricingPage);
+    TurfAPI.onReady(initPricingPage);
   </script>
 </body>
 </html>
