@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TurfSync | Create an Account</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Supabase Realtime config (anon/public key) -->
+  <script>
+    window.TURFSYNC_CONFIG = {
+      supabaseUrl: "https://axnfaxcwjovhdrdepcov.supabase.co",
+      supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4bmZheGN3am92aGRyZGVwY292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTQ3NjksImV4cCI6MjEwNjc5MDc2OX0.f8-9PY5yCDRWy8kyDiTPhIoSlXgy4hT8fq5AGD0yt6Q"
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/supabase-client.js"></script>
+</head>
+<body class="auth-page">
+
+  <div class="auth-split-wrapper">
+    
+    <!-- Left Brand & Value Proposition Sidebar -->
+    <aside class="auth-brand-sidebar">
+      <div>
+        <a href="index.html" class="logo" style="margin-bottom:2.5rem;display:inline-flex;">
+          <div class="logo-icon">⚡</div>
+          <div>Turf<span>Sync</span></div>
+        </a>
+
+        <div style="max-width:440px;">
+          <h2 style="font-size:2.25rem;font-weight:800;line-height:1.2;letter-spacing:-0.03em;margin-bottom:1rem;">
+            Join TurfSync Sports Network
+          </h2>
+          <p style="color:#94a3b8;font-size:1.05rem;line-height:1.6;">
+            Whether you are booking weekly match slots with friends or managing multi-sport complexes, TurfSync provides automated efficiency.
+          </p>
+
+          <div style="margin-top:2rem;display:flex;flex-direction:column;gap:1.25rem;">
+            <div style="display:flex;gap:1rem;align-items:flex-start;">
+              <span class="feature-check-icon">&#10003;</span>
+              <div>
+                <div style="font-weight:700;color:#fff;">For Players</div>
+                <div style="font-size:0.85rem;color:#94a3b8;margin-top:0.2rem;">Live 24/7 weekly slot tracking, recurring slot locks, and 1-click waitlist auto-promotions.</div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:1rem;align-items:flex-start;">
+              <span class="feature-check-icon">&#10003;</span>
+              <div>
+                <div style="font-weight:700;color:#fff;">For Turf Facility Owners</div>
+                <div style="font-size:0.85rem;color:#94a3b8;margin-top:0.2rem;">Multi-venue dashboards, live court matrices, dynamic peak surge pricing, and zero aggregator commission fees.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid rgba(255,255,255,0.1);font-size:0.825rem;color:#94a3b8;">
+        Trusted by verified football, cricket, badminton, and tennis facilities across Mumbai.
+      </div>
+    </aside>
+
+    <!-- Right Registration Form Area -->
+    <main class="auth-form-panel">
+      <div class="auth-card">
+        
+        <div class="auth-header">
+          <h1>Create Account</h1>
+          <p>Get started with TurfSync in under 30 seconds</p>
+        </div>
+
+        <!-- Role Selector Segmented Controls -->
+        <div class="role-segmented-box">
+          <div class="role-segment active" id="role-player-card" onclick="selectRole('PLAYER')">
+            <div class="role-segment-title">I'm a Player</div>
+            <div class="role-segment-desc">Book courts & manage match passes</div>
+          </div>
+
+          <div class="role-segment" id="role-owner-card" onclick="selectRole('VENUE_ADMIN')">
+            <div class="role-segment-title">I'm a Turf Owner</div>
+            <div class="role-segment-desc">Manage arenas & offline bookings</div>
+          </div>
+        </div>
+
+        <!-- Error Alert -->
+        <div id="register-error-alert" style="display:none;background:var(--accent-red-light);border:1px solid var(--accent-red);color:#991b1b;padding:0.75rem 1rem;border-radius:var(--radius-md);font-size:0.85rem;margin-bottom:1.25rem;">
+        </div>
+
+        <form id="register-form">
+          <input type="hidden" id="selected-role" value="PLAYER">
+
+          <div class="form-group">
+            <label class="form-label" for="reg-name">Full Name</label>
+            <input type="text" id="reg-name" class="form-control" placeholder="e.g. Alex Morgan" required autofocus>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label" for="reg-email">Email Address</label>
+              <input type="email" id="reg-email" class="form-control" placeholder="name@example.com" required autocomplete="email">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-phone">Phone Number</label>
+              <input type="tel" id="reg-phone" class="form-control" placeholder="+91 98765 43210" required>
+            </div>
+          </div>
+
+          <!-- Dynamic Facility Name Input (Shown only for VENUE_ADMIN) -->
+          <div class="form-group" id="venue-name-group" style="display:none;">
+            <label class="form-label" for="reg-venue-name">Facility / Sports Arena Name</label>
+            <input type="text" id="reg-venue-name" class="form-control" placeholder="e.g. Thunder Turf Sports Club">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label" for="reg-password">Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="reg-password" class="form-control" placeholder="Min. 6 characters" required autocomplete="new-password" oninput="checkPasswordStrength(this.value)">
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('reg-password', this)">Show</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-confirm-password">Confirm Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="reg-confirm-password" class="form-control" placeholder="Re-enter password" required autocomplete="new-password">
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('reg-confirm-password', this)">Show</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password Strength Indicator -->
+          <div class="strength-meter-box">
+            <div class="strength-meter-bar">
+              <div id="strength-bar-fill" class="strength-meter-fill"></div>
+            </div>
+            <div id="strength-label" class="strength-text">Password strength: Enter at least 6 characters</div>
+          </div>
+
+          <div style="font-size:0.775rem;color:var(--text-muted);margin:1rem 0 1.5rem;">
+            By signing up, you agree to our <a href="#" style="color:var(--primary-dark);font-weight:600;">Terms of Service</a> and <a href="#" style="color:var(--primary-dark);font-weight:600;">Refund Policy</a>.
+          </div>
+
+          <button type="submit" id="reg-submit-btn" class="btn btn-primary btn-block btn-lg">
+            Create Account &rarr;
+          </button>
+        </form>
+
+        <div style="text-align:center;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border);font-size:0.875rem;color:var(--text-muted);">
+          Already have an account? <a href="login.html" style="color:var(--primary-dark);font-weight:700;">Sign in &rarr;</a>
+        </div>
+
+        <div style="text-align:center;margin-top:1rem;">
+          <a href="index.html" style="font-size:0.825rem;color:var(--text-muted);">&larr; Back to Public Directory</a>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/ui.js"></script>
+  <script>
+    function togglePasswordVisibility(fieldId, btn) {
+      const field = document.getElementById(fieldId);
+      if (field.type === 'password') {
+        field.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        field.type = 'password';
+        btn.textContent = 'Show';
+      }
+    }
+
+    function checkPasswordStrength(password) {
+      const fill = document.getElementById('strength-bar-fill');
+      const label = document.getElementById('strength-label');
+
+      if (!password) {
+        fill.style.width = '0%';
+        label.textContent = 'Password strength: Enter at least 6 characters';
+        label.style.color = 'var(--text-muted)';
+        return;
+      }
+
+      let score = 0;
+      if (password.length >= 6) score += 25;
+      if (password.length >= 10) score += 25;
+      if (/[A-Z]/.test(password) && /[0-9]/.test(password)) score += 25;
+      if (/[^A-Za-z0-9]/.test(password)) score += 25;
+
+      fill.style.width = `${score}%`;
+
+      if (score <= 25) {
+        fill.style.backgroundColor = 'var(--accent-red)';
+        label.textContent = 'Password strength: Weak';
+        label.style.color = 'var(--accent-red)';
+      } else if (score <= 50) {
+        fill.style.backgroundColor = 'var(--accent-amber)';
+        label.textContent = 'Password strength: Fair';
+        label.style.color = '#b45309';
+      } else if (score <= 75) {
+        fill.style.backgroundColor = '#34d399';
+        label.textContent = 'Password strength: Good';
+        label.style.color = 'var(--primary-dark)';
+      } else {
+        fill.style.backgroundColor = 'var(--primary-dark)';
+        label.textContent = 'Password strength: Strong';
+        label.style.color = 'var(--primary-dark)';
+      }
+    }
+
+    function selectRole(role) {
+      document.getElementById('selected-role').value = role;
+      const playerCard = document.getElementById('role-player-card');
+      const ownerCard = document.getElementById('role-owner-card');
+      const venueGroup = document.getElementById('venue-name-group');
+
+      if (role === 'PLAYER') {
+        playerCard.classList.add('active');
+        ownerCard.classList.remove('active');
+        venueGroup.style.display = 'none';
+      } else {
+        ownerCard.classList.add('active');
+        playerCard.classList.remove('active');
+        venueGroup.style.display = 'block';
+      }
+    }
+
+    document.getElementById('register-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const role = document.getElementById('selected-role').value;
+      const fullName = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const confirmPassword = document.getElementById('reg-confirm-password').value;
+      const errorBox = document.getElementById('register-error-alert');
+      const submitBtn = document.getElementById('reg-submit-btn');
+
+      if (password !== confirmPassword) {
+        errorBox.textContent = 'Passwords do not match. Please verify.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      if (password.length < 6) {
+        errorBox.textContent = 'Password must be at least 6 characters long.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating account...';
+
+      const venueName = document.getElementById('reg-venue-name')?.value.trim();
+
+      setTimeout(async () => {
+        let result;
+        if (window.TurfAPI) {
+          result = await TurfAPI.register({
+            fullName,
+            email,
+            phone,
+            password,
+            role,
+            venueName
+          });
+        } else {
+          result = TurfStorage.register({
+            fullName,
+            email,
+            phone,
+            password,
+            role,
+            venueName
+          });
+        }
+
+        if (result && result.success) {
+          TurfUI.showToast(`✓ Account created! Welcome, ${result.user.fullName}!`, 'success');
+          setTimeout(() => {
+            if (result.user.role === 'VENUE_ADMIN') {
+              window.location.href = 'admin-dashboard.html';
+            } else {
+              window.location.href = 'my-bookings.html';
+            }
+          }, 400);
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = 'Create Account &rarr;';
+          errorBox.textContent = result?.error || 'Registration failed.';
+          errorBox.style.display = 'block';
+        }
+      }, 350);
+    });
+  </script>
+</body>
+</html>

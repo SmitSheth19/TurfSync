@@ -1,0 +1,307 @@
+/* Admin Dashboard & Management Styles */
+
+.admin-layout {
+  display: flex;
+  min-height: calc(100vh - 4.25rem);
+}
+
+/* Sidebar Navigation */
+.admin-sidebar {
+  width: 260px;
+  background-color: var(--secondary);
+  color: var(--text-inverse);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--secondary-light);
+}
+
+.sidebar-brand {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--secondary-light);
+}
+
+.sidebar-venue-select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background-color: var(--secondary-light);
+  border: 1px solid var(--secondary-muted);
+  color: var(--text-inverse);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sidebar-venue-select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 1.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  color: #94a3b8;
+  font-size: 0.925rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+}
+
+.sidebar-link:hover {
+  color: var(--text-inverse);
+  background-color: var(--secondary-light);
+}
+
+.sidebar-link.active {
+  color: var(--secondary);
+  background-color: var(--primary);
+}
+
+.sidebar-icon {
+  font-size: 1.15rem;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1.25rem;
+  border-top: 1px solid var(--secondary-light);
+}
+
+/* Admin Main Content Area */
+.admin-main {
+  flex-grow: 1;
+  background-color: var(--bg-main);
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-title-group h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--secondary);
+  letter-spacing: -0.02em;
+}
+
+.admin-title-group p {
+  color: var(--text-muted);
+  font-size: 0.925rem;
+  margin-top: 0.2rem;
+}
+
+/* KPI Stat Cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--secondary);
+  letter-spacing: -0.02em;
+}
+
+.stat-subtext {
+  font-size: 0.775rem;
+  color: var(--primary-dark);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-subtext.negative {
+  color: var(--accent-red);
+}
+
+.stat-icon-wrapper {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+}
+
+.stat-icon-green { background-color: var(--primary-light); color: var(--primary-dark); }
+.stat-icon-amber { background-color: var(--accent-amber-light); color: #b45309; }
+.stat-icon-blue { background-color: var(--accent-blue-light); color: #1d4ed8; }
+.stat-icon-purple { background-color: #f3e8ff; color: #7e22ce; }
+
+/* Court Live Matrix / Schedule Overview */
+.matrix-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 2rem;
+}
+
+.matrix-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.matrix-table th {
+  background-color: var(--bg-subtle);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+.matrix-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.matrix-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Dynamic Pricing Rules Card */
+.pricing-rule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  margin-bottom: 0.75rem;
+}
+
+.rule-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.rule-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--secondary);
+}
+
+.rule-timing {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rule-multiplier-badge {
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+/* Occupancy Heatmap */
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  gap: 4px;
+  background: var(--bg-card);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.heatmap-cell {
+  height: 38px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.725rem;
+  font-weight: 700;
+  transition: transform 0.15s ease;
+  cursor: pointer;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.08);
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+.heat-0 { background-color: #f1f5f9; color: #64748b; }
+.heat-25 { background-color: #d1fae5; color: #065f46; }
+.heat-50 { background-color: #6ee7b7; color: #064e3b; }
+.heat-75 { background-color: #10b981; color: #ffffff; }
+.heat-100 { background-color: #047857; color: #ffffff; }
+
+@media (max-width: 1024px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-layout { flex-direction: column; }
+  .admin-sidebar { width: 100%; }
+}
+
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .admin-main { padding: 1.5rem 1rem; }
+}
